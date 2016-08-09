@@ -6,5 +6,5 @@ def on_connect(client, userdata, flags, rc):
 
 def mqtt_create(host, topic):
     client = mqtt.Client()
-    
+
 
