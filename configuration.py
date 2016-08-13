@@ -16,3 +16,6 @@ def ConfigSectionMap(section):
             print("exception on %s!" % option)
             sectionMap[option] = None
     return sectionMap
+
+def get(section, option):
+    return Config.get(section, option)
