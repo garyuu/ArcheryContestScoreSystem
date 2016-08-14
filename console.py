@@ -26,7 +26,7 @@ class ScoringConsole(cmd.Cmd):
         if len(args) > 0:
             print('The command should not have any arguments.')
         else:
-            Controller.displat_status()
+            Controller.display_status()
 
     def do_assign(self, argstr):
         args = argstr.split()
