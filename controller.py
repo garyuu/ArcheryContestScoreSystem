@@ -1,3 +1,10 @@
+'''
+Author: Garyuu
+Date:   2016/8/15
+Name:   age_generator
+Descr.: To generate a message string from a dictionary.
+        The message string will be published to mqtt server.
+'''
 import configuration
 import mqtt_client as mqtt
 import message_parser as parser
@@ -6,31 +13,58 @@ import status
 import threading
 
 
-def hello(position):
-    msg = {}
-    msg['mode'] = 0
-    msg['wave'] = 1
+def reset(position):
+    msg = {
+        'mode': '0',
+        'wave': '0',
+    }
 
     if position != 'all':
-        machineList = stat.getMachineByPosition(position)
+        machinesList = [stat.getMachineByPosition(position)]
     else:
-        machineList = stat.getMachineList()
+        machinesList = stat.getMachinesList()
 
-    for machine in machineList:
-        msg['target'] = machine    
-        mqtt.publish(stat, generator.gen(msg))
+    for machine in machinesList:
+        msg['target'] = machine
+        mqtt.publish(client, generator.gen(msg))
+
+def hello(position):
+    msg = {
+        'mode': '0',
+        'wave': '1',
+    }
+
+    if position != 'all':
+        machinesList = [stat.getMachineByPosition(position)]
+    else:
+        machinesList = stat.getMachinesList()
+
+    for machine in machinesList:
+        msg['target'] = machine
+        mqtt.publish(client, generator.gen(msg))
 
 def display_status():
-
+    stat.display_all()
 
 def assign(position, machine):
-
+    stat.setMachineToPosition(machine, positon)
 
 def set(position, data):
+    msg = {
+        'target'        : stat.getMachineByPosition(position)
+        'mode'          : str(stat.getMode())
+        'wave'          : str(stat.getWave())
+        'position'      : position
+        'num_players'   : stat.getNumberOfPlayersOfPosition(position)
+        'score'         : []
+    }
 
+    for player in stat.getPlayersList():
+        msg['score'].append(str(stat.getScore(player)))
+    mqtt.publish(client, generator.gen(msg))
 
 def setrule(rulename):
-
+    stat.loadRule(rulename)
 
 def mqtt_on_message(client, userdata, message):
     process(parser.parse(message.payload))
