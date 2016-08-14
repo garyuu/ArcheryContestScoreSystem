@@ -1,3 +1,11 @@
+'''
+Author: Garyuu
+Date:   2016/8/12
+Name:   mqtt_client.py
+Descr.: A mqtt client module. Auto-connect to server when created.
+        Pass an on_message function can receive and do something
+        with the new message.
+'''
 import paho.mqtt.client as mqtt
 
 MQTT_HOST = ''
