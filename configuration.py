@@ -1,3 +1,9 @@
+'''
+Author: Garyuu
+Date:   2016/8/13
+Name:   configuration
+Descr.: To convert the settings file into object.
+'''
 import configparser
 
 CONFIG_FILENAME = "settings.cfg"

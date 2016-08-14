@@ -1,9 +1,9 @@
 '''
 Author: Garyuu
 Date:   2016/8/15
-Name:   age_generator
-Descr.: To generate a message string from a dictionary.
-        The message string will be published to mqtt server.
+Name:   controller
+Descr.: The core of the program. It's a bridge to most components.
+        A thread create while initializing to handle mqtt loop.
 '''
 import configuration
 import mqtt_client as mqtt
@@ -72,9 +72,10 @@ def mqtt_on_message(client, userdata, message):
 def mqtt_thread_func(client):
     client.loop_forever()
 
-stat = status.Status()
-
-client = MQTT.create(Config.get('MQTT',host), Config.get('MQTT', topic), mqtt_on_message)
-mqtt_thread = threading.Thread(target=mqtt_thread_func, args=(client,))
-mqtt_thread.start()
-mqtt_thread.join()
+def initialize():
+    global stat, client
+    stat = status.Status()
+    client = MQTT.create(Config.get('MQTT',host), Config.get('MQTT', topic), mqtt_on_message)
+    mqtt_thread = threading.Thread(target=mqtt_thread_func, args=(client,))
+    mqtt_thread.start()
+    mqtt_thread.join()

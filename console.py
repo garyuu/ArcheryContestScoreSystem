@@ -1,3 +1,9 @@
+'''
+Author: Garyuu
+Date:   2016/8/14
+Name:   console
+Descr.: Simple terminal for user.
+'''
 import controller as Controller
 import cmd
 import sys
