@@ -15,13 +15,11 @@ class ScoringConsole(cmd.Cmd):
         if len(args) == 0:
             Controller.reset('all')
         elif len(args) > 1:
-            print('Too mant arguments.')
-        elif args[0] == 'all':
+            print('Too many arguments.')
+        elif args[0] == 'all' or isnumeric(args[0]):
             Controller.reset(args[0])
-        elif not isnumeric(args[0]):
-            print('The arguments should be numeric.')
         else:
-            Controller.reset(int(args[0]))
+            print('The arguments should be numeric or all.')
 
     def do_hello(self, argstr):
         args = argstr.split()
@@ -29,12 +27,10 @@ class ScoringConsole(cmd.Cmd):
             print('The command should have 1 argument.')
         elif len(args) > 1:
             print('Too many arguments.')
-        elif args[0] == 'all':
+        elif args[0] == 'all' or isnumeric(args[0]):
             Controller.hello(args[0])
-        elif not isnumeric(args[0]):
-            print('The arguments should be numeric.')
         else:
-            Controller.hello(int(args[0]))
+            print('The arguments should be numeric or all.')
 
     def do_status(self, argstr):
         args = argstr.split()
@@ -48,18 +44,18 @@ class ScoringConsole(cmd.Cmd):
         if len(args) < 2:
             print('This command should have at least 2 arguments.')
         elif len(args) > 2:
-            print('Too mant arguments.')
+            print('Too many arguments.')
         elif not (isnumeric(args[0]) and isnumeric(args[1])):
             print('The arguments should be numeric.')
         else:
-            Controller.assign(int(args[0]), int(args[1]))
+            Controller.assign(args[0], args[1])
 
     def do_set(self, argstr):
         args = argstr.split()
         if len(args) < 2:
             print('This command should have at least 2 arguments.')
         else:
-            Controller.set(int(args[0]), args[1:len(args)])
+            Controller.set(args[0], args[1:])
 
     def do_setrule(self, argstr):
         args = argstr.split()
@@ -70,8 +66,9 @@ class ScoringConsole(cmd.Cmd):
         else:
             Controller.setrule(args[0])
 
-def console():
+def main():
     c = ScoringConsole()
     c.cmdloop()
 
-console()
+if __name__ == '__main__':
+    main()
