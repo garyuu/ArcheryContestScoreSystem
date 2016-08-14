@@ -10,16 +10,31 @@ class ScoringConsole(cmd.Cmd):
     def do_exit(self, argstr):
         sys.exit(1)
 
-    def do_hello(self, argstr):
+    def do_reset(self, argstr):
         args = argstr.split()
         if len(args) == 0:
-            Controller.hello('all')
+            Controller.reset('all')
         elif len(args) > 1:
             print('Too mant arguments.')
+        elif args[0] == 'all':
+            Controller.reset(args[0])
         elif not isnumeric(args[0]):
             print('The arguments should be numeric.')
         else:
+            Controller.reset(int(args[0]))
+
+    def do_hello(self, argstr):
+        args = argstr.split()
+        if len(args) == 0:
+            print('The command should have 1 argument.')
+        elif len(args) > 1:
+            print('Too many arguments.')
+        elif args[0] == 'all':
             Controller.hello(args[0])
+        elif not isnumeric(args[0]):
+            print('The arguments should be numeric.')
+        else:
+            Controller.hello(int(args[0]))
 
     def do_status(self, argstr):
         args = argstr.split()
