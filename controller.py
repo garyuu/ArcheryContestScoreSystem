@@ -75,7 +75,7 @@ def mqtt_thread_func(client):
 def initialize():
     global stat, client
     stat = status.Status()
-    client = MQTT.create(Config.get('MQTT',host), Config.get('MQTT', subscribetopic), Config.get('MQTT', publishtopic), mqtt_on_message)
+    client = mqtt.create(Config.get('MQTT',host), Config.get('MQTT', subscribetopic), Config.get('MQTT', publishtopic), mqtt_on_message)
     mqtt_thread = threading.Thread(target=mqtt_thread_func, args=(client,))
     mqtt_thread.start()
     mqtt_thread.join()
