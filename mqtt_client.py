@@ -7,9 +7,16 @@ Descr.: A mqtt client module. Auto-connect to server when created.
         with the new message.
 '''
 import paho.mqtt.client as mqtt
+import configparser
+
+MQTT_Config = configparser.ConfigParser()
+MQTT_Config.read("mqtt_settings.cfg")
+
+def setting(option):
+    return MQTT_Config.get('Connection', option)
 
 def on_connect(client, userdata, flags, rc):
-    client.subscribe(MQTT_SUBSCRIBE_TOPIC
+    client.subscribe(setting('subscribetopic')
 
 def on_message(client, userdata, message):
     print('Message: ' + message)
@@ -17,19 +24,13 @@ def on_message(client, userdata, message):
 def on_publish(client, userdata, mid):
     print('Published message ID = ' + str(mid))
 
-def create(host, subTopic, pubTopic, on_message_func = on_message, on_publish_func = on_publish):
-    global MQTT_HOST
-    global MQTT_SUBSCRIBE_TOPIC
-    global MQTT_PUBLISH_TOPIC
-    MQTT_HOST = host
-    MQTT_SUBSCRIBE_TOPIC = subTopic
-    MQTT_PUBLISH_TOPIC = pubTopic
+def create(on_message_func = on_message, on_publish_func = on_publish):
     client = mqtt.Client()
     client.on_connect = on_connect
     client.on_message = on_message_func
     client.on_publish = on_publish_func
-    client.connect(MQTT_HOST)
+    client.connect(setting('host'))
     return client
 
 def publish(client, message):
-    client.publish(MQTT_PUBLISH_TOPIC, message)
+    client.publish(setting('publishtopic'))
