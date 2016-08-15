@@ -20,13 +20,13 @@ def reset(position):
     }
 
     if position != 'all':
-        machinesList = [stat.getMachineByPosition(position)]
+        machinesList = [stat.getMachineByPosition(int(position))]
     else:
         machinesList = stat.getMachinesList()
 
     for machine in machinesList:
         msg['target'] = machine
-        stat.setWait(position)
+        stat.setWait(int(position))
         mqtt.publish(client, generator.gen(msg))
 
 def hello(position):
@@ -36,34 +36,34 @@ def hello(position):
     }
 
     if position != 'all':
-        machinesList = [stat.getMachineByPosition(position)]
+        machinesList = [stat.getMachineByPosition(int(position))]
     else:
         machinesList = stat.getMachinesList()
 
     for machine in machinesList:
         msg['target'] = machine
-        stat.setWait(position)
+        stat.setWait(int(position))
         mqtt.publish(client, generator.gen(msg))
 
 def display_status():
     stat.display_all()
 
 def assign(position, machine):
-    stat.setMachineToPosition(machine, positon)
+    stat.setMachineToPosition(int(machine), int(positon))
 
 def set(position, data):
     msg = {
-        'target'        : stat.getMachineByPosition(position)
+        'target'        : stat.getMachineByPosition(int(position))
         'mode'          : str(stat.mode.value)
         'wave'          : str(stat.wave)
         'position'      : position
-        'num_players'   : stat.getNumberOfPlayersOfPosition(position)
+        'num_players'   : stat.getNumberOfPlayersOfPosition(int(position))
         'score'         : []
     }
 
-    for player in stat.getPlayersList():
+    for player in stat.getPlayersListOfPosition(int(position)):
         msg['score'].append(str(stat.getScore(player)))
-    stat.setWait(position)
+    stat.setWait(int(position))
     mqtt.publish(client, generator.gen(msg))
 
 def setrule(rulename):

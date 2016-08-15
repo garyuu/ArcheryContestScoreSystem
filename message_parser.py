@@ -15,4 +15,12 @@ def parse(message):
         'wave'      : raw[2][4:],
         'total'     : raw[3][6:],
     }
+    for i in range(0, len(data['score'])):
+        if data['score'][i] == 'X':
+            data['score'][i] = 11
+        elif data['score'][i] == 'm':
+            data['score'][i] = 0
+        else:
+            data['score'][i] = int(data['score'][i])
+
     return data
