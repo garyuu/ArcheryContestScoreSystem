@@ -35,11 +35,11 @@ class Status():
     def getMacineList():
         machines = []
         for pos in self.positions:
-            machines.append(pos.machine) if pos != None else machines.append(None)
+            machines.append(pos.id) if pos != None else machines.append(None)
         return machines
 
     def getMachineByPosition(position):
-        return self.positions[position].machine
+        return self.positions[position].id
 
     def setWait(position):
         self.positions[position].wait()
