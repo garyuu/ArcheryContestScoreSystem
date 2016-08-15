@@ -11,9 +11,6 @@ import configuration
 
 MQTT_Config = configuration.SectionConfig('settings', 'MQTT')
 
-def setting(option):
-    return MQTT_Config.get('Connection', option)
-
 def on_connect(client, userdata, flags, rc):
     client.subscribe(MQTT_Config['subscribetopic'])
 
