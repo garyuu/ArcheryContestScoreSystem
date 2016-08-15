@@ -54,8 +54,8 @@ def assign(position, machine):
 def set(position, data):
     msg = {
         'target'        : stat.getMachineByPosition(position)
-        'mode'          : str(stat.getMode())
-        'wave'          : str(stat.getWave())
+        'mode'          : str(stat.mode.value)
+        'wave'          : str(stat.wave)
         'position'      : position
         'num_players'   : stat.getNumberOfPlayersOfPosition(position)
         'score'         : []
