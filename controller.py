@@ -26,6 +26,7 @@ def reset(position):
 
     for machine in machinesList:
         msg['target'] = machine
+        stat.setWait(position)
         mqtt.publish(client, generator.gen(msg))
 
 def hello(position):
@@ -41,6 +42,7 @@ def hello(position):
 
     for machine in machinesList:
         msg['target'] = machine
+        stat.setWait(position)
         mqtt.publish(client, generator.gen(msg))
 
 def display_status():
@@ -61,6 +63,7 @@ def set(position, data):
 
     for player in stat.getPlayersList():
         msg['score'].append(str(stat.getScore(player)))
+    stat.setWait(position)
     mqtt.publish(client, generator.gen(msg))
 
 def setrule(rulename):
@@ -75,7 +78,7 @@ def mqtt_thread_func(client):
 def initialize():
     global stat, client
     stat = status.Status()
-    client = mqtt.create(Config.get('MQTT',host), Config.get('MQTT', subscribetopic), Config.get('MQTT', publishtopic), mqtt_on_message)
+    client = mqtt.create(mqtt_on_message)
     mqtt_thread = threading.Thread(target=mqtt_thread_func, args=(client,))
     mqtt_thread.start()
     mqtt_thread.join()
