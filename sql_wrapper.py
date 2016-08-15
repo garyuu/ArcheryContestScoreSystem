@@ -1,7 +1,7 @@
 '''
 Author: NekOrz
-Date:   2016/8/14
-Name:   sql_function
+Date:   2016/8/15
+Name:   sql_wrapper
 Descr.: This file contain many function to let SQL really eazy(?)
 '''
 import MySQLdb
