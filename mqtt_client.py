@@ -25,8 +25,9 @@ def create(on_message_func = on_message, on_publish_func = on_publish):
     client.on_connect = on_connect
     client.on_message = on_message_func
     client.on_publish = on_publish_func
+    print(MQTT_Config['host'])
     client.connect(MQTT_Config['host'])
     return client
 
 def publish(client, message):
-    client.publish(MQTT_Config['publishtopic'])
+    client.publish(MQTT_Config['publishtopic'], message)

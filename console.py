@@ -15,6 +15,7 @@ class ScoringConsole(cmd.Cmd):
         Controller.initialize()
 
     def do_exit(self, argstr):
+        Controller.destroy()
         sys.exit(1)
 
     def do_reset(self, argstr):
@@ -23,7 +24,7 @@ class ScoringConsole(cmd.Cmd):
             Controller.reset('all')
         elif len(args) > 1:
             print('Too many arguments.')
-        elif args[0] == 'all' or isnumeric(args[0]):
+        elif args[0] == 'all' or args[0].isnumeric():
             Controller.reset(args[0])
         else:
             print('The arguments should be numeric or all.')
@@ -34,7 +35,7 @@ class ScoringConsole(cmd.Cmd):
             print('The command should have 1 argument.')
         elif len(args) > 1:
             print('Too many arguments.')
-        elif args[0] == 'all' or isnumeric(args[0]):
+        elif args[0] == 'all' or args[0].isnumeric():
             Controller.hello(args[0])
         else:
             print('The arguments should be numeric or all.')
@@ -52,7 +53,7 @@ class ScoringConsole(cmd.Cmd):
             print('This command should have at least 2 arguments.')
         elif len(args) > 2:
             print('Too many arguments.')
-        elif not (isnumeric(args[0]) and isnumeric(args[1])):
+        elif not (args[0].isnumeric() and args[1].isnumeric()):
             print('The arguments should be numeric.')
         else:
             Controller.assign(args[0], args[1])

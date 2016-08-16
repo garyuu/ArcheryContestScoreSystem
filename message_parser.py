@@ -31,6 +31,7 @@ def short(raw):
     else:
         data = {'type': 'ok'}
     data['position'] = raw[0]
+    return data
 
 def parse(message):
     raw = message.split()

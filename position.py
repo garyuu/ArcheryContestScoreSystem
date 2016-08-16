@@ -9,7 +9,7 @@ import threading
 
 
 class Position():
-    self.count = 0
+    count = 0
 
     def __init__(self,num,id=0):
         self.id = id
@@ -20,7 +20,7 @@ class Position():
         if self.state == 1:
             if self.count < self.num:
                 return "OK"
-            else
+            else:
                 return "OK Got wave"
         elif self.state == 0:
             return "Waiting"
@@ -49,12 +49,12 @@ def main():
     p = Position()
     
     p.ChangeStateToWait(1)
-    print "YAY!"
-    print p
+    print("YAY!")
+    print(p)
     while p != -1:
-        print p
+        print(p)
     p.ChangeStateToOK()
-    print p
+    print(p)
     
 if __name__ == '__main__':
     main()

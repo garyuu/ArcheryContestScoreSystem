@@ -12,7 +12,7 @@ def score_sequence(scorelist):
     return scoreSeq
 
 def gen(msg):
-    if isnumeric(msg['mode']):
+    if msg['mode'].isnumeric():
         message = "{}i{}{}s{}t{}{}".format(
             msg['target'],
             msg['mode'],
@@ -23,4 +23,5 @@ def gen(msg):
         )
     else:
         message = "{}i{}".format(msg['target'], msg['mode'])
+    return message
 

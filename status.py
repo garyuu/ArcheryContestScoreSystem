@@ -4,7 +4,7 @@ Date:   2016/8/15
 Name:   status
 Descr.: Save all core status and settings.
 '''
-from sql_wrapper import SQLWrapper
+#from sql_wrapper import SQLWrapper
 import configuration
 from position import Position
 from enum import Enum
@@ -17,12 +17,12 @@ class ModeEnum(Enum):
 class Status:
     config = configuration.Config('status')
     sql_config = configuration.SectionConfig('sql', 'SQL')
-    wrapper = SQLWrapper(
+    '''wrapper = SQLWrapper(
         self.sql_config['host'],
         self.sql_config['user'],
         self.sql_config['password'],
         self.sql_config['database']
-    )
+    )'''
 
     def __init__(self):
         self.mode = ModeEnum(int(self.config.get('Contest', 'mode')))
@@ -39,7 +39,7 @@ class Status:
         ary = self.config.get('Position', 'positionlist').split(',')
         pos = [None]
         for i in ary:
-            pos.append(Position(i, getNumberOfPlayersOfPosition(i)))
+            pos.append(Position(self.getNumberOfPlayersOfPosition(i), int(i)))
         return pos
 
     def getMacineList(self):
@@ -52,13 +52,16 @@ class Status:
         return self.positions[position].id
 
     def getPlayersListOfPosition(self, position):
-        return self.wrapper.GetPlayerListByPosition(position)
+        #return self.wrapper.GetPlayerListByPosition(position)
+        return ['1A', '1B', '1C', '1D']
 
     def getNumberOfPlayersOfPosition(self, position):
-        return len(self.getPlayersListOfPosition(position))
+        #return len(self.getPlayersListOfPosition(position))
+        return 4
 
     def getScore(self, player_position):
-        scores = self.wrapper.GetScoreByPlayerPosition(player_position)
+        #scores = self.wrapper.GetScoreByPlayerPosition(player_position)
+        scores = [['X', '9', '7', '5', '1', 'm']]
         total = 0
         for wave in scores:
             for i in wave:
@@ -80,6 +83,7 @@ class Status:
         self.rule.read('rules/'+self.rulename)
 
     def saveWave(self, message):
+        '''
         self.wrapper.AddWave(
             self.mode.value,
             int(message['wave']),
@@ -87,10 +91,13 @@ class Status:
             self.stage + self.substage,
             message['score']
         )
+        '''
         self.positions[int(message['player'][:-1])].AddCount()
+        self.message += message['message'] + '\n'
 
-    def savePostionOk(self, position):
+    def setPositionOk(self, position):
         self.positions[position].state = 1
+        self.message += '{}: OK!\n'.format(position)
 
     def clear(self):
         self.wave = 1

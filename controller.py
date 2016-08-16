@@ -83,9 +83,12 @@ def mqtt_thread_func(client):
     client.loop_forever()
 
 def initialize():
-    global stat, client
+    global stat, client, mqtt_thread
     stat = status.Status()
     client = mqtt.create(mqtt_on_message)
     mqtt_thread = threading.Thread(target=mqtt_thread_func, args=(client,))
     mqtt_thread.start()
+
+def destroy():
+    client.disconnect()
     mqtt_thread.join()
