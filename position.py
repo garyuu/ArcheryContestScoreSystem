@@ -1,5 +1,5 @@
 '''
-Author: NekOrz
+Author: NekOrz, Garyuu
 Date:   2016/8/15
 Name:   position
 Descr.: The object that serves as a signal/timer thingy
@@ -9,13 +9,19 @@ import threading
 
 
 class Position():
-    def __init__(self,id=0):
-        self.id = 0
+    self.count = 0
+
+    def __init__(self,num,id=0):
+        self.id = id
         self.state = 1 # 1:OK, 0:waiting , -1:dead
+        self.num = num
     
     def __str__(self):
         if self.state == 1:
-            return "OK"
+            if self.count < self.num:
+                return "OK"
+            else
+                return "OK Got wave"
         elif self.state == 0:
             return "Waiting"
         else:
@@ -33,7 +39,11 @@ class Position():
         self.timer.cancel()
         self.state = 1
     
-    
+    def AddCount(self):
+        self.count += 1
+
+    def ResetCount(self):
+        self.count = 0
         
 def main():
     p = Position()
@@ -58,5 +68,5 @@ if __name__ == '__main__':
     
     
     
-    
+
     

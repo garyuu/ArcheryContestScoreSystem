@@ -29,14 +29,17 @@ class Status:
         self.wave = int(self.config.get('Contest', 'wave'))
         self.rulename = self.config.get('Contest', 'rulename')
         self.num_pos = int(self.config.get('Position', 'number'))
-        self.positions = self.buildPositionList(self.config.get('Position', 'positionlist'))
-        slef.rule = configuration.Config('rules/'+self.rulename)
+        self.positions = self.buildPositionList()
+        self.rule = configuration.Config('rules/'+self.rulename)
+        self.message = ''
+        self.stage = self.config.get('Contest', 'stage')
+        self.substage = self.config.get('Contest', 'substage')
 
-    def buildPositionList(self, string):
-        ary = string.split(',')
+    def buildPositionList(self):
+        ary = self.config.get('Position', 'positionlist').split(',')
         pos = [None]
         for i in ary:
-            pos.append(Position(i))
+            pos.append(Position(i, getNumberOfPlayersOfPosition(i)))
         return pos
 
     def getMacineList(self):
@@ -67,6 +70,7 @@ class Status:
 
     def setWait(self, position):
         self.positions[position].ChangeStateToWait()
+        self.message += 'Wait for position {} to respond.\n'.format(position)
 
     def setMachineToPosition(self, machine, position):
         self.positions[position].id = machine
@@ -79,14 +83,23 @@ class Status:
         self.wrapper.AddWave(
             self.mode.value,
             int(message['wave']),
-            self.wrapper.,
-            self.config.get('Contest', 'stage') + self.config.get('Contest', 'substage')),
+            self.wrapper.GetIdByPos(message['player']),
+            self.stage + self.substage,
             message['score']
         )
-            
+        self.positions[int(message['player'][:-1])].AddCount()
 
-    def display_all(self):
+    def savePostionOk(self, position):
+        self.positions[position].state = 1
+
+    def clear(self):
+        self.wave = 1
+        self.positions = buildPositionList()
 
     def __str__(self):
-
-    
+        msg = 'Mode: {}, Wave {}'.format(self.mode.name, self.wave)
+        msg = 'Stage: {}-{}\n'.format(self.stage, self.substage)
+        for i in range(0, len(self.positions)):
+            msg += '{}: {}\n'.format(i, self.positions[i])
+        msg += 'Messages:\n' + self.message
+        return msg

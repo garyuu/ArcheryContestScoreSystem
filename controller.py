@@ -15,8 +15,7 @@ import threading
 
 def reset(position):
     msg = {
-        'mode': '0',
-        'wave': '0',
+        'mode': 'r',
     }
 
     if position != 'all':
@@ -31,8 +30,7 @@ def reset(position):
 
 def hello(position):
     msg = {
-        'mode': '0',
-        'wave': '1',
+        'mode': 'h',
     }
 
     if position != 'all':
@@ -46,19 +44,19 @@ def hello(position):
         mqtt.publish(client, generator.gen(msg))
 
 def display_status():
-    stat.display_all()
+    print(stat)
 
 def assign(position, machine):
     stat.setMachineToPosition(int(machine), int(positon))
 
 def set(position, data):
     msg = {
-        'target'        : stat.getMachineByPosition(int(position))
-        'mode'          : str(stat.mode.value)
-        'wave'          : str(stat.wave)
-        'position'      : position
-        'num_players'   : stat.getNumberOfPlayersOfPosition(int(position))
-        'score'         : []
+        'target'        : stat.getMachineByPosition(int(position)),
+        'mode'          : str(stat.mode.value),
+        'wave'          : str(stat.wave),
+        'position'      : position,
+        'num_players'   : stat.getNumberOfPlayersOfPosition(int(position)),
+        'score'         : [],
     }
 
     for player in stat.getPlayersListOfPosition(int(position)):
@@ -69,8 +67,17 @@ def set(position, data):
 def setrule(rulename):
     stat.loadRule(rulename)
 
+def status_clear():
+    stat.clear()
+
+def message_process(message):
+    if message['type'] == 'ok':
+        stat.setPositionOk(int(message['position']))
+    elif message['type'] == 'wave':
+        stat.saveWave(message)
+
 def mqtt_on_message(client, userdata, message):
-    stat.saveWave(parser.parse(message.payload))
+    message_process(parser.parse(message.payload))
 
 def mqtt_thread_func(client):
     client.loop_forever()

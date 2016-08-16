@@ -12,13 +12,7 @@ def score_sequence(scorelist):
     return scoreSeq
 
 def gen(msg):
-    if msg['mode'] == 0:
-        message = "{}i{}{}s".format(
-            msg['target'],
-            msg['mode'],
-            msg['wave'],
-        )
-    else:
+    if isnumeric(msg['mode']):
         message = "{}i{}{}s{}t{}{}".format(
             msg['target'],
             msg['mode'],
@@ -27,4 +21,6 @@ def gen(msg):
             msg['num_players'],
             score_sequence(msg['score'])
         )
+    else:
+        message = "{}i{}".format(msg['target'], msg['mode'])
 

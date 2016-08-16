@@ -61,8 +61,8 @@ def main():
     
     for i in range(0,len(r)):
         for j in range(0,len(r[i])):
-            print r[i][j],
-        print ""    
+            print(r[i][j]),
+        print("")
     print("??")
 
 if __name__ == '__main__':

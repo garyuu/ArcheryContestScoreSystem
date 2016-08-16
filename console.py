@@ -12,6 +12,7 @@ class ScoringConsole(cmd.Cmd):
     def __init__(self):
         cmd.Cmd.__init__(self)
         self.prompt = '-->'
+        Controller.initialize()
 
     def do_exit(self, argstr):
         sys.exit(1)
@@ -71,6 +72,13 @@ class ScoringConsole(cmd.Cmd):
             print('Too many arguments.')
         else:
             Controller.setrule(args[0])
+
+    def do_newcontest(self, argstr):
+        args = argstr.split()
+        if len(args) > 0:
+            print('Too many arguments.')
+        else:
+            Controller.status_clear()
 
 def main():
     c = ScoringConsole()
