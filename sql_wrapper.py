@@ -33,10 +33,7 @@ class SQLWrapper():
         self.db.commit()
         
     def AddWaveByList(self,wave):
-        if len(wave) <= 4:
-            self.AddWave(wave[0],wave[1],wave[2],wave[3])
-        else:
-            self.AddWave(wave[0],wave[1],wave[2],wave[3],wave[4:])
+        self.AddWave(wave[0],wave[1],wave[2],wave[3],wave[4:])
     
     def GetScoreById(self,id): #Shot can be -1, which means no score.
         self.cur.execute("SELECT shot1,shot2,shot3,shot4,shot5,shot6 from waves where id in ('%s') order by number"%(id))
@@ -64,7 +61,7 @@ class SQLWrapper():
     
 def main():
     a = SQLWrapper()
-    a.AddPlayerByList(['joee','e','8A'])
+    a.AddWaveByList([4,8,9,'j'])
     r = a.GetIdByPos('1C')
     print(r)
     
