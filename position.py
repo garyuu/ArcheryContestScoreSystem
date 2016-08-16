@@ -18,10 +18,10 @@ class Position():
     
     def __str__(self):
         if self.state == 1:
-            if self.count < self.num:
+            if self.count == 0:
                 return "OK"
             else:
-                return "OK Got wave"
+                return "OK Got:{}".format(self.count)
         elif self.state == 0:
             return "Waiting"
         else:

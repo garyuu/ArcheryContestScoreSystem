@@ -8,13 +8,13 @@ Descr.: To parse a message from mqtt server.
             10A: X,5,4,2,1,m set2 point:22
 '''
 def wave(raw):
+    print(raw)
     data = {
         'type'      : 'wave',
         'player'    : raw[0][:-1],
-        'score'     : raw[1].split(','),
+        'score'     : raw[1].split(","),
         'wave'      : raw[2][4:],
         'total'     : raw[3][6:],
-        'message'   : message,
     }
     for i in range(0, len(data['score'])):
         if data['score'][i] == 'X':
@@ -33,9 +33,12 @@ def short(raw):
     data['position'] = raw[0]
     return data
 
-def parse(message):
+def parse(b_message):
+    message = b_message.decode("utf-8")
     raw = message.split()
     if len(raw) > 2:
-        return wave(raw)
+        msg = wave(raw)
+        msg['message'] = message
+        return msg
     else:
         return short(raw)
