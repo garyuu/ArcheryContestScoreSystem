@@ -4,12 +4,12 @@ Date:   2016/8/15
 Name:   sql_wrapper
 Descr.: This file contain many function to let SQL really eazy(?)
 '''
-import MySQLdb
+import pymysql
 
 class SQLWrapper():
     def __init__(self,host="localhost", user="python", passwd="admin", db="ccsu99_cs_archery_contest"):
         try:
-            self.db = MySQLdb.connect(host,user,passwd,db)
+            self.db = pymysql.connect(host,user,passwd,db)
         except:
             print("cannot login!")
             return
@@ -20,7 +20,7 @@ class SQLWrapper():
         self.db.commit()
     
     def AddPlayerByList(self,player):
-        self.AddEntry(player[0],player[1],player[2]);
+        self.AddPlayer(player[0],player[1],player[2]);
        
     def AddWave(self,mode,number,pid,id,shots_raw): #shots_raw have to be a list.
         if type(shots_raw) is not list:
@@ -33,14 +33,18 @@ class SQLWrapper():
         self.db.commit()
         
     def AddWaveByList(self,wave):
-        if len(wave) <= 5:
-            self.AddWave(wave[0],wave[1],wave[2],wave[3])
-        else:
-            self.AddWave(wave[0],wave[1],wave[2],wave[3],wave[4:])
+        self.AddWave(wave[0],wave[1],wave[2],wave[3],wave[4:])
     
     def GetScoreById(self,id): #Shot can be -1, which means no score.
         self.cur.execute("SELECT shot1,shot2,shot3,shot4,shot5,shot6 from waves where id in ('%s') order by number"%(id))
         return self.cur.fetchall()
+#        rr = []
+#        for i in range(0,len(r)):
+#            buf = []
+#            for j in range(1,7):
+#                buf.append(r[i]['shot{0}'.format(j)])
+#            rr.append(buf)
+#        return rr
     
     def GetPlayerPosByPos(self,pos): #1d-list
         self.cur.execute("SELECT position FROM players WHERE position REGEXP '{0}[a-zA-Z]';".format(pos))
@@ -57,8 +61,9 @@ class SQLWrapper():
     
 def main():
     a = SQLWrapper()
-    r = a.GetPlayerPosByPos(2)
-    
+    a.AddWaveByList([4,8,9,'j'])
+    r = a.GetIdByPos('1C')
+    print(r)
     for i in range(0,len(r)):
         for j in range(0,len(r[i])):
             print(r[i][j]),
