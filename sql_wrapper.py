@@ -6,7 +6,6 @@ Descr.: This file contain many function to let SQL really eazy(?)
 '''
 import MySQLdb
 
-
 class SQLWrapper():
     def __init__(self,host="localhost", user="python", passwd="admin", db="ccsu99_cs_archery_contest"):
         try:
@@ -16,12 +15,12 @@ class SQLWrapper():
             return
         self.cur= self.db.cursor()
     
-    def AddPlayer(self,name,department,position,id):
-        self.cur.execute("INSERT INTO players (name,department,position,id) VALUES ('%s','%s','%s',%d);"%(name,department,position,id))
+    def AddPlayer(self,name,department,position):
+        self.cur.execute("INSERT INTO players (name,department,position) VALUES ('%s','%s','%s');"%(name,department,position))
         self.db.commit()
     
     def AddPlayerByList(self,player):
-        self.AddEntry(player[0],player[1],player[2],player[3]);
+        self.AddEntry(player[0],player[1],player[2]);
        
     def AddWave(self,mode,number,pid,id,shots_raw): #shots_raw have to be a list.
         if type(shots_raw) is not list:
@@ -43,14 +42,22 @@ class SQLWrapper():
         self.cur.execute("SELECT shot1,shot2,shot3,shot4,shot5,shot6 from waves where id in ('%s') order by number"%(id))
         return self.cur.fetchall()
     
-    def GetRealPosByPos(self,pos): #Don't forget it return 2d-list.
+    def GetPlayerPosByPos(self,pos): #1d-list
         self.cur.execute("SELECT position FROM players WHERE position REGEXP '{0}[a-zA-Z]';".format(pos))
-        return self.cur.fetchall();
+        r = self.cur.fetchall()
+        rr = []
+        for i in range(0,len(r)):
+            rr.append(r[i][0])
+        return rr
     
+    def GetIdByPos(self,pos): #This is REAL pos.
+        self.cur.execute("SELECT id FROM players WHERE position IN ('{0}');".format(pos))
+        r = self.cur.fetchall()
+        return r[0][0]
     
 def main():
     a = SQLWrapper()
-    r = a.GetRealPosByPos(2)
+    r = a.GetPlayerPosByPos(2)
     
     for i in range(0,len(r)):
         for j in range(0,len(r[i])):
