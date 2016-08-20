@@ -15,9 +15,8 @@ import threading
 class Controller:
     def __init__(self):
         # Launch MQTT client
-
         m_conf = configuration.SectionConfig('settings', 'MQTT')
-        self.mqtt = MQTTClient(mconf['host'], mconf['subscribetopic'], mconf['publishtopic'])
+        self.mqtt = MQTTClient(m_conf['host'], m_conf['subscribetopic'], m_conf['publishtopic'])
         self.mqtt.on_message = self.mqtt_on_message
         self.mqtt.connect()
 
@@ -30,68 +29,68 @@ class Controller:
     def mqtt_on_message(self, client, userdata, message):
         self.message_process(parser.parse(message.payload))
 
-    def message_process(message):
+    def message_process(self, message):
         if message['type'] == 'ok':
-            stat.setPositionOk(int(message['position']))
+            self.status.setPositionOk(int(message['position']))
         elif message['type'] == 'wave':
-            stat.saveWave(message)
+            self.status.saveWave(message)
 
     ##### Controll Machine ####
-    def machine_reset(position):
+    def machine_reset(self, position):
         msg = {
             'mode': 'r',
         }
 
         if position != 'all':
-            machinesList = [stat.getMachineByPosition(int(position))]
+            machinesList = [self.status.getMachineByPosition(int(position))]
         else:
-            machinesList = stat.getMachinesList()
+            machinesList = self.status.getMachinesList()
 
         for machine in machinesList:
             msg['target'] = machine
-            stat.setWait(int(position))
-            mqtt.publish(client, generator.gen(msg))
+            self.status.setWait(int(position))
+            self.mqtt.publish(generator.gen(msg))
 
-    def machine_hello(position):
+    def machine_hello(self, position):
         msg = {
             'mode': 'h',
         }
 
         if position != 'all':
-            machinesList = [stat.getMachineByPosition(int(position))]
+            machinesList = [self.status.getMachineByPosition(int(position))]
         else:
-            machinesList = stat.getMachinesList()
+            machinesList = self.status.getMachinesList()
 
         for machine in machinesList:
             msg['target'] = machine
-            stat.setWait(int(position))
-            mqtt.publish(client, generator.gen(msg))
+            self.status.setWait(int(position))
+            self.mqtt.publish(generator.gen(msg))
 
-    def machine_assign(position, machine):
-        stat.setMachineToPosition(int(machine), int(position))
+    def machine_assign(self, position, machine):
+        self.status.setMachineToPosition(int(machine), int(position))
 
-    def machine_set(position, data):
+    def machine_set(self, position, data):
         msg = {
-            'target'        : stat.getMachineByPosition(int(position)),
-            'mode'          : str(stat.mode.value),
-            'wave'          : str(stat.wave),
+            'target'        : self.status.getMachineByPosition(int(position)),
+            'mode'          : str(self.status.mode.value),
+            'wave'          : str(self.status.wave),
             'position'      : position,
-            'num_players'   : stat.getNumberOfPlayersOfPosition(int(position)),
+            'num_players'   : self.status.getNumberOfPlayersOfPosition(int(position)),
             'score'         : [],
         }
 
-        for player in stat.getPlayersListOfPosition(int(position)):
-            msg['score'].append(str(stat.getScore(player)))
-        stat.setWait(int(position))
-        mqtt.publish(client, generator.gen(msg))
+        for player in self.status.getPlayersListOfPosition(int(position)):
+            msg['score'].append(str(self.status.getScore(player)))
+        self.status.setWait(int(position))
+        self.mqtt.publish(generator.gen(msg))
     
     #### Controll Status ####
-    def status_setrule(rulename):
-        stat.loadRule(rulename)
+    def status_setrule(self, rulename):
+        self.status.loadRule(rulename)
 
-    def status_clear():
-        stat.clear()
+    def status_clear(self):
+        self.status.clear()
 
-    def status_display():
-        print(stat)
+    def status_display(self):
+        print(self.status)
 
