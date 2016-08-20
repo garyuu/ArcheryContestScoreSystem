@@ -4,7 +4,7 @@ Date:   2016/8/14
 Name:   console
 Descr.: Simple terminal for user.
 '''
-import controller as Controller
+from controller import Controller
 import cmd
 import sys
 
@@ -12,20 +12,20 @@ class ScoringConsole(cmd.Cmd):
     def __init__(self):
         cmd.Cmd.__init__(self)
         self.prompt = '-->'
-        Controller.initialize()
+        self.ctrl = Controller()
 
     def do_exit(self, argstr):
-        Controller.destroy()
+        self.ctrl.destroy()
         sys.exit(1)
 
     def do_reset(self, argstr):
         args = argstr.split()
         if len(args) == 0:
-            Controller.reset('all')
+            print('The command should have 1 argument.')
         elif len(args) > 1:
             print('Too many arguments.')
         elif args[0] == 'all' or args[0].isnumeric():
-            Controller.reset(args[0])
+            self.ctrl.machine_reset(args[0])
         else:
             print('The arguments should be numeric or all.')
 
@@ -36,7 +36,7 @@ class ScoringConsole(cmd.Cmd):
         elif len(args) > 1:
             print('Too many arguments.')
         elif args[0] == 'all' or args[0].isnumeric():
-            Controller.hello(args[0])
+            self.ctrl.machine_hello(args[0])
         else:
             print('The arguments should be numeric or all.')
 
@@ -45,7 +45,7 @@ class ScoringConsole(cmd.Cmd):
         if len(args) > 0:
             print('The command should not have any arguments.')
         else:
-            Controller.display_status()
+            self.ctrl.status_display()
 
     def do_assign(self, argstr):
         args = argstr.split()
@@ -56,14 +56,14 @@ class ScoringConsole(cmd.Cmd):
         elif not (args[0].isnumeric() and args[1].isnumeric()):
             print('The arguments should be numeric.')
         else:
-            Controller.assign(args[0], args[1])
+            self.ctrl.machine_assign(args[0], args[1])
 
     def do_set(self, argstr):
         args = argstr.split()
         if len(args) < 2:
             print('This command should have at least 2 arguments.')
         else:
-            Controller.set(args[0], args[1:])
+            self.ctrl.machine_set(args[0], args[1:])
 
     def do_setrule(self, argstr):
         args = argstr.split()
@@ -72,14 +72,14 @@ class ScoringConsole(cmd.Cmd):
         elif len(args) > 1:
             print('Too many arguments.')
         else:
-            Controller.setrule(args[0])
+            self.ctrl.status.setrule(args[0])
 
     def do_newcontest(self, argstr):
         args = argstr.split()
         if len(args) > 0:
             print('Too many arguments.')
         else:
-            Controller.status_clear()
+            self.ctrl.status_clear()
 
 def main():
     c = ScoringConsole()

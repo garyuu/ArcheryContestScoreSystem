@@ -61,14 +61,15 @@ class Status:
 
     def getScore(self, player_position):
         #scores = self.wrapper.GetScoreByPlayerPosition(player_position)
-        scores = [['X', '9', '7', '5', '1', 'm']]
+        scores = [[11, 10, 7, 5, 1, 0]]
         total = 0
         for wave in scores:
             for i in wave:
-                if i == 11:
+                j = int(i)
+                if j == 11:
                     total += 10
-                elif i >= 0:
-                    total += i
+                elif j >= 0:
+                    total += j
         return total
 
     def setWait(self, position):
