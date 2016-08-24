@@ -6,67 +6,89 @@ Descr.: The object that serves as a signal/timer thingy
 '''
 #import time
 import threading
+from enum import Enum
 
+class StateEnum(Enum):
+    unknown = 0
+    ready = 1
+    busy = 2
+    
 
 class Position():
-    count = 0
-
-    def __init__(self,num,id=0):
+    def __init__(self,id,players):
         self.id = id
-        self.state = 1 # 1:OK, 0:waiting , -1:dead
-        self.num = num
+        self.state = StateEnum.unknown
+        self.waiting = False
+        self.dead = False
+        self.players = players
+        self.flags = dict()
     
     def __str__(self):
-        if self.state == 1:
-            if self.count == 0:
-                return "OK"
+        string = "[X]" if self.dead else "[ ]"
+        string += "M{}. ".format(self.id)
+        string += "State: {}".format(self.state.name)
+        string += ", waiting..." if self.waiting else ""
+        if self.state == StateEnum.busy:
+            if self.AllBack():
+                string += ", All sent back"
             else:
-                return "OK Got:{}".format(self.count)
-        elif self.state == 0:
-            return "Waiting"
-        else:
-            return "Dead"
+                string += ", Sent back:"
+                for player in self.flags:
+                    string += " {},".format(player)
+                string += " Still {}".format(len(self.players)-len(self.flags))
+        return string
+
+    def ChangeStateToReady(self):
+        self.state = StateEnum.ready
+
+    def ChangeStateToBusy(self):
+        self.state = StateEnum.busy
     
-    def ChangeStateToWait(self,sec = 10.0):
-        self.state = 0
-        self.timer = threading.Timer(sec,self.ChangeStateToDead)
+    def WaitForResponse(self,sec = 10.0):
+        self.waiting = True
+        self.timer = threading.Timer(sec,self.SetDead)
         self.timer.start()
         
-    def ChangeStateToDead(self):
-        self.state = -1
+    def SetDead(self):
+        self.dead = True
     
-    def ChangeStateToOK(self):
+    def SendResponse(self):
         self.timer.cancel()
-        self.state = 1
+        self.waiting = False
+        self.dead = False
     
-    def AddCount(self):
-        self.count += 1
+    def SetPlayerFlag(self, player):
+        if player in self.players:
+            self.flags[player] = True
 
-    def ResetCount(self):
-        self.count = 0
+    def ResetFlags(self):
+        self.flags = dict()
+
+    def AllBack(self):
+        return len(self.flags) == len(self.players)
+
+    def IsBusy(self):
+        return self.state == StateEnum.busy
         
 def main():
-    p = Position()
+    p = Position(1, ['1A', '1B', '1C'])
     
-    p.ChangeStateToWait(1)
+    p.WaitForResponse(1)
     print("YAY!")
     print(p)
-    while p != -1:
-        print(p)
-    p.ChangeStateToOK()
+    #while p.waiting:
+    #    print(p)
+    p.SendResponse()
+    print(p)
+    p.ChangeStateToBusy()
+    print(p)
+    p.SetPlayerFlag('1B')
+    p.SetPlayerFlag('1C')
+    print(p)
+    p.SetPlayerFlag('1A')
+    print(p)
+    p.ResetFlags()
     print(p)
     
 if __name__ == '__main__':
     main()
-    
-
-
-    
-    
-    
-    
-    
-    
-    
-
-    

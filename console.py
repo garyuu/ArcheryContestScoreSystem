@@ -27,7 +27,7 @@ class ScoringConsole(cmd.Cmd):
         elif args[0] == 'all' or args[0].isnumeric():
             self.ctrl.machine_reset(args[0])
         else:
-            print('The arguments should be numeric or all.')
+            print('The argument should be numeric or all.')
 
     def do_hello(self, argstr):
         args = argstr.split()
@@ -38,7 +38,18 @@ class ScoringConsole(cmd.Cmd):
         elif args[0] == 'all' or args[0].isnumeric():
             self.ctrl.machine_hello(args[0])
         else:
-            print('The arguments should be numeric or all.')
+            print('The argument should be numeric or all.')
+
+    def do_force(self, argstr):
+        args = argstr.split()
+        if len(args) < 1:
+            print('This command should have at least 1 argument.')
+        elif len(args) > 1:
+            print('Too many arguments.')
+        elif args[0] == 'all' or args[0].isnumeric():
+            self.ctrl.machine_force(args[0])
+        else:
+            print('The argument should be numeric or all.')
 
     def do_status(self, argstr):
         args = argstr.split()
@@ -60,10 +71,12 @@ class ScoringConsole(cmd.Cmd):
 
     def do_set(self, argstr):
         args = argstr.split()
-        if len(args) < 2:
-            print('This command should have at least 2 arguments.')
+        if len(args) < 1:
+            print('This command should have at least 1 argument.')
+        elif len(args) > 1:
+            print('Too many arguments.')
         else:
-            self.ctrl.machine_set(args[0], args[1:])
+            self.ctrl.machine_set(args[0])
 
     def do_setrule(self, argstr):
         args = argstr.split()
@@ -80,6 +93,9 @@ class ScoringConsole(cmd.Cmd):
             print('Too many arguments.')
         else:
             self.ctrl.status_clear()
+
+    def do_nextwave(self, argstr):
+        self.ctrl.status_nextwave()
 
 def main():
     c = ScoringConsole()

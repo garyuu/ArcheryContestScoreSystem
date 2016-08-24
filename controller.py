@@ -21,7 +21,10 @@ class Controller:
         self.mqtt.connect()
 
         # Launch status
-        self.status = status.Status()
+        self.status = status.Status(self.all_sent_back_check)
+    
+    def __del__(self):
+        self.destroy()
 
     def destroy(self):
         self.mqtt.disconnect()
@@ -32,14 +35,18 @@ class Controller:
     def message_process(self, message):
         if message['type'] == 'ok':
             self.status.setPositionOk(int(message['position']))
+        elif message['type'] == 'ready':
+            self.status.setPositionReady(int(message['position']))
         elif message['type'] == 'wave':
             self.status.saveWave(message)
 
+    def all_sent_back_check(self, machine):
+        msg = {'mode': 'g', 'target': machine}
+        self.mqtt.publish(generator.gen(msg))
+
     ##### Controll Machine ####
     def machine_reset(self, position):
-        msg = {
-            'mode': 'r',
-        }
+        msg = {'mode': 'r'}
 
         if position != 'all':
             machinesList = [self.status.getMachineByPosition(int(position))]
@@ -52,10 +59,20 @@ class Controller:
             self.mqtt.publish(generator.gen(msg))
 
     def machine_hello(self, position):
-        msg = {
-            'mode': 'h',
-        }
+        msg = {'mode': 'h'}
 
+        if position != 'all':
+            machinesList = [self.status.getMachineByPosition(int(position))]
+        else:
+            machinesList = self.status.getMachinesList()
+
+        for machine in machinesList:
+            msg['target'] = machine
+            self.status.setWait(int(position))
+            self.mqtt.publish(generator.gen(msg))
+
+    def machine_force(self, position):
+        msg = {'mode': 'f'}
         if position != 'all':
             machinesList = [self.status.getMachineByPosition(int(position))]
         else:
@@ -69,20 +86,24 @@ class Controller:
     def machine_assign(self, position, machine):
         self.status.setMachineToPosition(int(machine), int(position))
 
-    def machine_set(self, position, data):
-        msg = {
-            'target'        : self.status.getMachineByPosition(int(position)),
-            'mode'          : str(self.status.mode.value),
-            'wave'          : str(self.status.wave),
-            'position'      : position,
-            'num_players'   : self.status.getNumberOfPlayersOfPosition(int(position)),
-            'score'         : [],
-        }
+    def machine_set(self, position):
+        if self.status.positionIsBusy(int(position)):
+            print("The machine is too busy to receive set messages.")
+        else:
+            msg = {
+                'target'        : self.status.getMachineByPosition(int(position)),
+                'mode'          : str(self.status.mode.value),
+                'wave'          : str(self.status.wave),
+                'position'      : position,
+                'num_players'   : self.status.getNumberOfPlayersOfPosition(int(position)),
+                'score'         : [],
+            }
 
-        for player in self.status.getPlayersListOfPosition(int(position)):
-            msg['score'].append(str(self.status.getScore(player)))
-        self.status.setWait(int(position))
-        self.mqtt.publish(generator.gen(msg))
+            for player in self.status.getPlayersListOfPosition(int(position)):
+                msg['score'].append(str(self.status.getScore(player)))
+            self.status.setWait(int(position))
+            self.mqtt.publish(generator.gen(msg))
+            self.status.setPositionBusy(int(position))
     
     #### Controll Status ####
     def status_setrule(self, rulename):
@@ -90,6 +111,9 @@ class Controller:
 
     def status_clear(self):
         self.status.clear()
+
+    def status_nextwave(self):
+        self.status.nextWave()
 
     def status_display(self):
         print(self.status)

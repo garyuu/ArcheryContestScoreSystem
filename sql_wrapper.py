@@ -8,19 +8,19 @@ import pymysql
 
 class SQLWrapper():
     def __init__(self,host="localhost", user="python", passwd="admin", db="ccsu99_cs_archery_contest"):
-        try:
-            self.db = pymysql.connect(host,user,passwd,db)
-        except:
-            print("cannot login!")
-            return
-        self.cur= self.db.cursor()
+        #try:
+        self.db = pymysql.connect(host,user,passwd,db)
+        #except:
+        #    print("cannot login!")
+        #    return
+        self.cur = self.db.cursor()
     
-    def AddPlayer(self,name,department,position):
-        self.cur.execute("INSERT INTO players (name,department,position) VALUES ('%s','%s','%s');"%(name,department,position))
+    def AddPlayer(self,name,department,position,tag):
+        self.cur.execute("INSERT INTO players (name,department,position,tag) VALUES ('{}','{}',{},'{}');".format(name,department,position,tag))
         self.db.commit()
     
     def AddPlayerByList(self,player):
-        self.AddPlayer(player[0],player[1],player[2]);
+        self.AddPlayer(player[0],player[1],player[2],player[3]);
        
     def AddWave(self,mode,number,pid,id,shots_raw): #shots_raw have to be a list.
         if type(shots_raw) is not list:
@@ -35,8 +35,8 @@ class SQLWrapper():
     def AddWaveByList(self,wave):
         self.AddWave(wave[0],wave[1],wave[2],wave[3],wave[4:])
     
-    def GetScoreById(self,id): #Shot can be -1, which means no score.
-        self.cur.execute("SELECT shot1,shot2,shot3,shot4,shot5,shot6 from waves where id in ('%s') order by number"%(id))
+    def GetScoreById(self,id,pid): #Shot can be -1, which means no score.
+        self.cur.execute("SELECT shot1,shot2,shot3,shot4,shot5,shot6 FROM waves WHERE id == '{}' AND pid == {} ORDER BY number".format(id, pid))
         return self.cur.fetchall()
 #        rr = []
 #        for i in range(0,len(r)):
@@ -46,16 +46,16 @@ class SQLWrapper():
 #            rr.append(buf)
 #        return rr
     
-    def GetPlayerPosByPos(self,pos): #1d-list
-        self.cur.execute("SELECT position FROM players WHERE position REGEXP '{0}[a-zA-Z]';".format(pos))
+    def GetPlayerTagByPos(self,pos): #1d-list
+        self.cur.execute("SELECT tag FROM players WHERE position == {};".format(pos))
         r = self.cur.fetchall()
         rr = []
         for i in range(0,len(r)):
             rr.append(r[i][0])
         return rr
     
-    def GetIdByPos(self,pos): #This is REAL pos.
-        self.cur.execute("SELECT id FROM players WHERE position IN ('{0}');".format(pos))
+    def GetIdByTag(self,tag):
+        self.cur.execute("SELECT id FROM players WHERE tag == '{}';".format(tag))
         r = self.cur.fetchall()
         return r[0][0]
     
@@ -72,6 +72,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-    
-
-
