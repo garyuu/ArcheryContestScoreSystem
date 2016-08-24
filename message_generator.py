@@ -15,7 +15,7 @@ def gen(msg):
     if not msg['mode'].isnumeric():
         message = "{}i{}".format(msg['target'], msg['mode'])
     print(message)
-    elif msg['mode'] == 1:
+    elif msg['mode'] == 1: # Qualifying
         message = "{}i{}{}s{}t{}{}".format(
             msg['target'],
             msg['mode'],
@@ -23,6 +23,16 @@ def gen(msg):
             msg['position'],
             msg['num_players'],
             score_sequence(msg['score'])
+        )
+    else: # Individual/Team elimination seek/total
+        message = "{}i{}{}s{}a{}{}b{}".format(
+            msg['target'],
+            msg['mode'],
+            msg['wave'],
+            msg['tag_a'],
+            msg['point_a'],
+            msg['tag_b'],
+            msg['point_b']
         )
     return message
 

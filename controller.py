@@ -47,7 +47,6 @@ class Controller:
     ##### Controll Machine ####
     def machine_reset(self, position):
         msg = {'mode': 'r'}
-
         if position != 'all':
             machinesList = [self.status.getMachineByPosition(int(position))]
         else:
@@ -60,7 +59,6 @@ class Controller:
 
     def machine_hello(self, position):
         msg = {'mode': 'h'}
-
         if position != 'all':
             machinesList = [self.status.getMachineByPosition(int(position))]
         else:
