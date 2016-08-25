@@ -15,21 +15,23 @@ class StateEnum(Enum):
     
 
 class Position():
-    def __init__(self,id,players):
-        self.id = id
+    def __init__(self, pid, mid, player_list):
+        self.id = pid
+        self.machine = mid
+        self.players = player_list
         self.state = StateEnum.unknown
         self.waiting = False
         self.dead = False
-        self.players = players
         self.flags = dict()
     
     def __str__(self):
-        string = "[X]" if self.dead else "[ ]"
-        string += "M{}. ".format(self.id)
+        string = "{}: ".format(self.id)
+        string += "[X]" if self.dead else "[ ]"
+        string += "M{}. ".format(self.machine)
         string += "State: {}".format(self.state.name)
         string += ", waiting..." if self.waiting else ""
         if self.state == StateEnum.busy:
-            if self.AllBack():
+            if self.all_back():
                 string += ", All sent back"
             else:
                 string += ", Sent back:"
@@ -38,57 +40,40 @@ class Position():
                 string += " Still {}".format(len(self.players)-len(self.flags))
         return string
 
-    def ChangeStateToReady(self):
+    def change_state_to_ready(self):
         self.state = StateEnum.ready
 
-    def ChangeStateToBusy(self):
+    def change_state_to_busy(self):
         self.state = StateEnum.busy
     
-    def WaitForResponse(self,sec = 10.0):
+    def wait_for_response(self,sec = 10.0):
         self.waiting = True
         self.timer = threading.Timer(sec,self.SetDead)
         self.timer.start()
         
-    def SetDead(self):
+    def set_dead(self):
         self.dead = True
     
-    def SendResponse(self):
+    def received_response(self):
         self.timer.cancel()
         self.waiting = False
         self.dead = False
     
-    def SetPlayerFlag(self, player):
+    def set_player_flag(self, player):
         if player in self.players:
             self.flags[player] = True
 
-    def ResetFlags(self):
+    def reset_flags(self):
         self.flags = dict()
 
-    def AllBack(self):
+    def all_back(self):
         return len(self.flags) == len(self.players)
 
-    def IsBusy(self):
+    def is_busy(self):
         return self.state == StateEnum.busy
         
 def main():
-    p = Position(1, ['1A', '1B', '1C'])
-    
-    p.WaitForResponse(1)
-    print("YAY!")
-    print(p)
-    #while p.waiting:
-    #    print(p)
-    p.SendResponse()
-    print(p)
-    p.ChangeStateToBusy()
-    print(p)
-    p.SetPlayerFlag('1B')
-    p.SetPlayerFlag('1C')
-    print(p)
-    p.SetPlayerFlag('1A')
-    print(p)
-    p.ResetFlags()
-    print(p)
+    pass
     
 if __name__ == '__main__':
     main()
