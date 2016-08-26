@@ -10,42 +10,81 @@ from position import Position
 from enum import Enum
 
 class ModeEnum(Enum):
-    qualiying = 1
-    dual = 2
-    team = 3
+    Qualiying       = '1'
+    IndividualPoint = '2'
+    TeamPoint       = '3'
+    IndividualScore = '4'
+    TeamScore       = '5'
+
 
 class Status:
-    config = configuration.Config('status')
-    sql_config = configuration.SectionConfig('sql', 'SQL')
+    def __init__(self, num_pos):
+        self.config = configuration.Config('status')
+        self.num_pos = num_pos
+        self.message = ""
+        self.check = None
+        self.build_position_list()
 
-    def __init__(self, check):
-        """
-        self.wrapper = SQLWrapper(
-            self.sql_config['host'],
-            self.sql_config['user'],
-            self.sql_config['password'],
-            self.sql_config['database']
-        )
-        """
-        self.check = check
-        self.mode = ModeEnum(int(self.config.get('Contest', 'mode')))
-        self.wave = int(self.config.get('Contest', 'wave'))
-        self.rulename = self.config.get('Contest', 'rulename')
-        self.num_pos = int(self.config.get('Position', 'number'))
-        self.positions = self.buildPositionList()
-        self.rule = configuration.Config('rules/'+self.rulename)
-        self.message = ''
-        self.stage = self.config.get('Contest', 'stage')
-        self.substage = self.config.get('Contest', 'substage')
+    def __del__(self):
+        self.save_config()
 
-    def buildPositionList(self):
-        ary = self.config.get('Position', 'positionlist').split(',')
-        pos = [None]
-        for i in ary:
-            pos.append(Position(int(i), self.getPlayersListOfPosition(i)))
-        return pos
+    def __str__(self):
 
-    def getMacineList(self):
+    #=====#
+    # Get #
+    #=====#
+    def get_mode(self):
+        return self.config.getint('Contest', 'mode')
+
+    def get_wave(self):
+        return self.config.getint('Contest', 'wave')
+        
+    def get_rulename(self):
+        return self.config.get('Contest', 'rulename')
+
+    def get_stage(self):
+        return self.config.get('Contest', 'stage')
+
+    def get_substage(self):
+        return self.config.get('Contest', 'substage')
+
+    #=====#
+    # Set #
+    #=====#
+    def set_mode(self, mode): # mode should be str
+        self.config.set('Contest', 'mode', ModeEnum[mode].value)
+        self.config.set('Contest', 'stage', mode)
+        self.load_rule_wave()
+
+    def set_wave(self, wave): # wave should be int
+        self.config.set('Contest', 'wave', str(wave))
+
+    def set_rulename(self, rulename):
+        self.config.set('Contest', 'rulename', rulename)
+        self.load_rule(rulename)
+
+    def set_substage(self, substage):
+        self.config.set('Contest', 'wave', substage)
+
+    def set_machine_to_position(self, machine, position, nosave=False):
+        if machine in self.machines:
+
+        self.positions[position].id = machine
+
+    #=========#
+    # Methods #
+    #=========#
+    def build_position_list(self):
+        self.positions = [None]
+        self.machines = [None]
+        for i in range(1, len(self.num_pos)+1):
+            self.positions.append(Position(i, i, self.get_player_list_of_position(i)))
+            self.machines.append(i)
+        preset_positions = self.config.options('Preset')
+        for pos in preset_positions:
+            self.set_machine_to_position()
+
+    def get_machine_list(self):
         machines = []
         for pos in self.positions:
             machines.append(pos.id) if pos != None else machines.append(None)
@@ -85,12 +124,14 @@ class Status:
         self.positions[position].WaitForResponse()
         self.message += 'Wait for position {} to respond.\n'.format(position)
 
-    def setMachineToPosition(self, machine, position):
-        self.positions[position].id = machine
 
-    def loadRule(self, rulename):
-        self.rulename = rulename
-        self.rule.read('rules/'+self.rulename)
+    def load_rule_wave(self):
+        ruleconfig = configuration.SectionConfig('rules/'+self.rulename, self.get_stage())
+        self.rule_wave = int(ruleconfig['wave'])
+
+    def sendCheck(self, machine):
+        if self.check:
+            self.check(machine)
 
     def saveWave(self, message):
         """
@@ -105,7 +146,7 @@ class Status:
         pos = self.getPositionByPlayerTag(message['player'])
         self.positions[pos].SetPlayerFlag(message['player'])
         if self.positions[pos].AllBack():
-            self.check(self.getMachineByPosition(pos))
+            self.sendCheck(int(self.getMachineByPosition(pos)))
             self.positions[pos].ResetFlags()
         self.message += message['message'] + '\n'
     
@@ -130,10 +171,7 @@ class Status:
     def positionIsBusy(self, position):
         return self.positions[position].IsBusy()
 
-    def __str__(self):
-        msg = 'Mode: {}, Wave {}\n'.format(self.mode.name, self.wave)
-        msg += 'Stage: {}-{}\n'.format(self.stage, self.substage)
-        for i in range(0, len(self.positions)):
-            msg += '{}: {}\n'.format(i, self.positions[i])
-        msg += 'Messages:\n' + self.message
-        return msg
+    def save_config(self):
+        with open('status.cfg', 'w') as configfile
+            self.config.write(configfile)
+
