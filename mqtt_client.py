@@ -19,11 +19,11 @@ def pub_f(client, userdata, mid):
     print('Published message ID = ' + str(mid))
 
 class MQTTClient(mqtt.Client):
-    def __init__(self, host, to_subscribe, to_publish):
+    def __init__(self, config):
         super(MQTTClient, self).__init__()
-        self.host = host
-        self.subscribe_topic = to_subscribe
-        self.publish_topic = to_publish
+        self.host = config['host']
+        self.subscribe_topic = config['subscribetopic']
+        self.publish_topic = config['publishtopic']
         self.on_connect = cnt_f
         self.on_message = msg_f
         self.on_publish = pub_f
