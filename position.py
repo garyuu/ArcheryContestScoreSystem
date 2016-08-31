@@ -48,7 +48,7 @@ class Position():
     
     def wait_for_response(self,sec = 10.0):
         self.waiting = True
-        self.timer = threading.Timer(sec,self.SetDead)
+        self.timer = threading.Timer(sec,self.set_dead)
         self.timer.start()
         
     def set_dead(self):

@@ -37,8 +37,9 @@ class Status:
         message += "Stage: {}-{} Mode{} Wave{} Rule: {}\n".format(
             self.get_stage(), self.get_substage(), self.get_mode(),
             self.get_wave(), self.get_rulename())
-        for p in self.positions:
-            message += p
+        for pos in self.positions:
+            if pos:
+                message += str(pos)
         return message
 
     #=====#
@@ -64,21 +65,21 @@ class Status:
 
     def get_player_list_of_position(self, position):
         db_msg = {
-            'action' = 'playerlistofposition',
-            'position' = position,
+            'action': 'playerlistofposition',
+            'position': position,
         }
-        return DBAccess.request(db_msg)
+        return DBAccess.request(db_msg)['content']
 
     def get_number_of_players_of_position(self, position):
         return len(self.get_player_list_of_position(position))
 
     def get_score(self, tag, stage=None):
         db_msg = {
-            'action' = 'scorearray',
-            'tag' = tag,
-            'stage' = stage if stage else self.get_stage(),
+            'action': 'scorearray',
+            'tag': tag,
+            'stage': stage if stage else self.get_stage(),
         }
-        score_array = DBAccess.request(db_msg)
+        score_array = DBAccess.request(db_msg)['content']
         total = 0
         for wave in score_array:
             for i in wave:
@@ -101,7 +102,6 @@ class Status:
         self.config.set('Contest', 'mode', ModeEnum[mode].value)
         self.config.set('Contest', 'stage', mode)
         self.load_rule_wave()
-        self.clear()
 
     def set_wave(self, wave): # wave should be int
         self.config.set('Contest', 'wave', str(wave))
@@ -111,7 +111,7 @@ class Status:
         self.load_rule_wave(rulename)
 
     def set_substage(self, substage):
-        self.config.set('Contest', 'wave', substage)
+        self.config.set('Contest', 'substage', substage)
 
     def set_machine_auto(self):
         idle_machine = self.num_pos + 1
@@ -136,18 +136,18 @@ class Status:
             self.config.set('Preset', str(position), str(machine))
 
     def set_position_wait(self, position):
-        self.positions[position].WaitForResponse()
+        self.positions[position].wait_for_response()
         self.message += 'Wait for position {} to respond.\n'.format(position)
  
     def set_position_busy(self, position):
-        self.positions[position].ChangeStateToBusy()
+        self.positions[position].change_state_to_busy()
 
     def set_position_ok(self, position):
-        self.positions[position].SendResponse()
+        self.positions[position].received_response()
         self.message += '{}: OK!\n'.format(position)
 
-    def setP_position_ready(self, position):
-        self.positions[position].ChangeStateToReady()
+    def set_position_ready(self, position):
+        self.positions[position].change_state_to_ready()
         self.message += '{}: Ready!\n'.format(position)
 
     #=========#
@@ -156,7 +156,7 @@ class Status:
     def build_position_list(self):
         self.positions = [None]
         self.machines = [None] + [0] * self.num_pos
-        for i in range(1, len(self.num_pos)+1):
+        for i in range(1, self.num_pos+1):
             self.positions.append(Position(i, 0, self.get_player_list_of_position(i)))
             self.machines.append(0)
         preset_positions = self.config.options('Preset')
@@ -165,7 +165,7 @@ class Status:
         self.set_machine_auto()
 
     def load_rule_wave(self):
-        ruleconfig = configuration.SectionConfig('rules/'+self.rulename, self.get_stage())
+        ruleconfig = configuration.SectionConfig('rules/'+self.get_rulename(), self.get_stage())
         self.rule_wave = int(ruleconfig['wave'])
 
     def send_check(self, machine):
@@ -174,33 +174,33 @@ class Status:
 
     def save_wave(self, message):
         db_msg = {
-            'action' = 'savewave',
-            'tag' = message['player'],
-            'shots' = message['score'],
-            'wave' = self.get_wave()
-            'stage' = self.get_stage().self.get_substage()
+            'action': 'savewave',
+            'tag': message['player'],
+            'shots': message['score'],
+            'wave': self.get_wave(),
+            'stage': self.get_stage() + self.get_substage()
         }
         resp = DBAccess.request(db_msg)
 
-        pos = self.getPositionByPlayerTag(message['player'])
-        self.positions[pos].SetPlayerFlag(message['player'])
-        if self.positions[pos].AllBack():
-            self.send_check(int(self.getMachineByPosition(pos)))
-            self.positions[pos].ResetFlags()
+        pos = self.get_position_by_player_tag(message['player'])
+        self.positions[pos].set_player_flag(message['player'])
+        if self.positions[pos].all_back():
+            self.send_check(int(self.get_machine_by_position(pos)))
+            self.positions[pos].reset_flags()
         self.message += message['message'] + '\n'
 
     def clear(self):
-        self.wave = 1
+        self.set_wave(1)
         self.positions = self.build_position_list()
 
     def next_wave(self):
-        self.wave += 1
+        self.set_wave(self.get_wave()+1)
 
     def position_is_busy(self, position):
-        return self.positions[position].IsBusy()
+        return self.positions[position].is_busy()
 
     def save_config(self):
-        with open('status.cfg', 'w') as configfile
+        with open('status.cfg', 'w') as configfile:
             self.config.write(configfile)
 
     def unlink(self, position):

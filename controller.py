@@ -56,10 +56,10 @@ class Controller:
     def machine_force(self, position):
         self.machine_short_message(position, 'f')
 
-    def machine_assign(self, position, machine):
+    def machine_assign(self, machine, position):
         self.status.set_machine_to_position(int(machine), int(position))
 
-    def machine_assign_auto
+    def machine_assign_auto(self):
         self.status.set_machine_auto()
 
     def machine_unlink(self, position):
@@ -71,8 +71,8 @@ class Controller:
         else:
             msg = {
                 'target'        : self.status.get_machine_by_position(int(position)),
-                'mode'          : str(self.status.get_mode),
-                'wave'          : str(self.status.get_wave),
+                'mode'          : str(self.status.get_mode()),
+                'wave'          : str(self.status.get_wave()),
                 'position'      : position,
                 'num_players'   : self.status.get_number_of_players_of_position(int(position)),
                 'score'         : [],
@@ -80,7 +80,7 @@ class Controller:
 
             for player in self.status.get_player_list_of_position(int(position)):
                 msg['score'].append(str(self.status.get_score(player)))
-            self.status.set_wait(int(position))
+            self.status.set_position_wait(int(position))
             self.mqtt.publish(generator.gen(msg))
             self.status.set_position_busy(int(position))
     
@@ -119,10 +119,12 @@ class Controller:
         self.message_process(parser.parse(message.payload))
 
     def message_process(self, message):
+        print(message)
         if message['type'] == 'ok':
             self.status.set_position_ok(int(message['position']))
         elif message['type'] == 'ready':
-            self.status.set_position_(int(message['position']))
+            self.status.set_position_ready(int(message['position']))
+            self.machine_assign(message['machine'], message['position'])
         elif message['type'] == 'wave':
             self.status.save_wave(message)
 

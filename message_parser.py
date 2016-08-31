@@ -36,13 +36,14 @@ def wave(raw):
     return data
 
 def short(raw):
+    data = {}
     sender = raw[0].split('t')
     data['machine'] = sender[0]
     data['position'] = sender[1]
     if raw[1] == "ready":
-        data = {'type': 'ready'}
+        data['type'] = 'ready'
     else:
-        data = {'type': 'ok'}
+        data['type'] = 'ok'
     return data
 
 def parse(b_message):

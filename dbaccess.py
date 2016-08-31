@@ -21,8 +21,7 @@ class DBAccess:
                              hashlib.sha256).hexdigest()
         message = {'command': command, 'signature': signature}
         response = requests.post(DBAccess.config['url'], data=message)
-        if __name__ == '__main__':
-            print(response.text)
+        print(response.text)
         return json.loads(response.text)
 
 def main():
