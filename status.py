@@ -6,11 +6,13 @@ Descr.: Save all core status and settings.
 '''
 #from sql_wrapper import SQLWrapper
 import configuration
+from dbaccess import DBAccess
 from position import Position
 from enum import Enum
 
 class ModeEnum(Enum):
-    Qualiying       = '1'
+    Practice        = '1'
+    Qualifying      = '1'
     IndividualPoint = '2'
     TeamPoint       = '3'
     IndividualScore = '4'
@@ -53,17 +55,24 @@ class Status:
         return self.positions[position].machine
 
     def get_player_list_of_position(self, position):
-        #return self.wrapper.GetPlayerTagByPos(position)
-        return ['1A', '1B', '1C', '1D']
+        db_msg = {
+            'action' = 'playerlistofposition',
+            'position' = position,
+        }
+        return DBAccess.request(db_msg)
 
     def get_number_of_players_of_position(self, position):
         return len(self.get_player_list_of_position(position))
 
     def get_score(self, tag, stage=None):
-        """
-        scores = self.wrapper.GetScoreByPlayerPosition(player_position)
+        db_msg = {
+            'action' = 'scorearray',
+            'tag' = tag,
+            'stage' = stage if stage else self.get_stage(),
+        }
+        score_array = DBAccess.request(db_msg)
         total = 0
-        for wave in scores:
+        for wave in score_array:
             for i in wave:
                 j = int(i)
                 if j == 11:
@@ -71,8 +80,6 @@ class Status:
                 elif j >= 0:
                     total += j
         return total
-        """
-        return 168
 
     def get_position_by_player_tag(self, tag):
         for i in range(1, len(self.positions)):
@@ -86,6 +93,7 @@ class Status:
         self.config.set('Contest', 'mode', ModeEnum[mode].value)
         self.config.set('Contest', 'stage', mode)
         self.load_rule_wave()
+        self.clear()
 
     def set_wave(self, wave): # wave should be int
         self.config.set('Contest', 'wave', str(wave))
@@ -157,15 +165,15 @@ class Status:
             self.check(machine)
 
     def save_wave(self, message):
-        """
-        self.wrapper.AddWave(
-            self.mode.value,
-            int(message['wave']),
-            self.wrapper.GetIdByTag(message['player']),
-            self.stage + self.substage,
-            message['score']
-        )
-        """
+        db_msg = {
+            'action' = 'savewave',
+            'tag' = message['player'],
+            'shots' = message['score'],
+            'wave' = self.get_wave()
+            'stage' = self.get_stage().self.get_substage()
+        }
+        resp = DBAccess.request(db_msg)
+
         pos = self.getPositionByPlayerTag(message['player'])
         self.positions[pos].SetPlayerFlag(message['player'])
         if self.positions[pos].AllBack():

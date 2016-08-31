@@ -3,7 +3,6 @@ Author: Garyuu
 Date:   2016/8/15
 Name:   controller
 Descr.: The core of the program. It's a bridge to most components.
-        A thread create while initializing to handle mqtt loop.
 '''
 import configuration
 from mqtt_client import MQTTClient
@@ -16,6 +15,8 @@ class Controller:
     def __init__(self):
         self.config = configuration.Config('settings')
         self.load_config()
+        self.stage_iter = iter(self.schedule)
+        self.current_stage = next(self.stage_iter)
 
         # Launch MQTT client
         m_conf = configuration.SectionConfig('settings', 'MQTT')
@@ -26,6 +27,7 @@ class Controller:
         # Launch status
         self.status = status.Status(self.get_total_number_of_position())
         self.status.check = self.all_sent_back_check
+        self.status_setstage()
     
     def __del__(self):
         self.destroy()
@@ -58,7 +60,7 @@ class Controller:
         self.status.set_machine_to_position(int(machine), int(position))
 
     def machine_assign_auto
-
+        self.status.set_machine_auto()
 
     def machine_unlink(self, position):
         self.status.unlink(int(position))
@@ -94,6 +96,16 @@ class Controller:
     def status_nextwave(self):
         self.status.next_wave()
 
+    def status_nextstage(self):
+        try:
+            self.current_stage = next(self.stage_iter)
+        except:
+            print("Already in end stage.")
+
+    def status_setstage(self):
+            self.status.set_mode(self.current_stage)
+            self.status.set_substage('')
+
     def status_display(self):
         print(self.status)
 
@@ -112,7 +124,7 @@ class Controller:
         elif message['type'] == 'ready':
             self.status.set_position_(int(message['position']))
         elif message['type'] == 'wave':
-            self.status.saveWave(message)
+            self.status.save_wave(message)
 
     def all_sent_back_check(self, machine):
         msg = {'mode': 'g', 'target': str(machine)}

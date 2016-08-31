@@ -32,6 +32,7 @@ def wave(raw):
             data['score'][i] = 0
         else:
             data['score'][i] = int(data['score'][i])
+    data['score'] += [-1] * (6-len(data['score']))
     return data
 
 def short(raw):
