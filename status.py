@@ -32,6 +32,14 @@ class Status:
         self.save_config()
 
     def __str__(self):
+        message = self.message
+        message += "=====================================\n"
+        message += "Stage: {}-{} Mode{} Wave{} Rule: {}\n".format(
+            self.get_stage(), self.get_substage(), self.get_mode(),
+            self.get_wave(), self.get_rulename())
+        for p in self.positions:
+            message += p
+        return message
 
     #=====#
     # Get #
