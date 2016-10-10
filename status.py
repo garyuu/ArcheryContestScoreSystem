@@ -28,9 +28,6 @@ class Status:
         self.load_rule_wave()
         self.build_position_list()
 
-    def __del__(self):
-        self.save_config()
-
     def __str__(self):
         message = self.message
         message += "=====================================\n"
@@ -139,15 +136,15 @@ class Status:
         self.positions[position].wait_for_response()
         self.message += 'Wait for position {} to respond.\n'.format(position)
  
-    def set_position_busy(self, position):
-        self.positions[position].change_state_to_busy()
+    def set_position_Receiving(self, position):
+        self.positions[position].change_state('Receiving')
 
     def set_position_ok(self, position):
         self.positions[position].received_response()
         self.message += '{}: OK!\n'.format(position)
 
     def set_position_ready(self, position):
-        self.positions[position].change_state_to_ready()
+        self.positions[position].change_state('Ready')
         self.message += '{}: Ready!\n'.format(position)
 
     #=========#
@@ -162,7 +159,7 @@ class Status:
         preset_positions = self.config.options('Preset')
         for pos in preset_positions:
             self.set_machine_to_position(self.config.getint('Preset', pos), int(pos))
-        self.set_machine_auto()
+        #self.set_machine_auto()
 
     def load_rule_wave(self):
         ruleconfig = configuration.SectionConfig('rules/'+self.get_rulename(), self.get_stage())
@@ -196,8 +193,8 @@ class Status:
     def next_wave(self):
         self.set_wave(self.get_wave()+1)
 
-    def position_is_busy(self, position):
-        return self.positions[position].is_busy()
+    def position_is_ready(self, position):
+        return self.positions[position].is_ready()
 
     def save_config(self):
         with open('status.cfg', 'w') as configfile:

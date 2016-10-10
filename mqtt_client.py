@@ -36,8 +36,8 @@ class MQTTClient(mqtt.Client):
         super(MQTTClient, self).disconnect()
         self.thread.join()
 
-    def publish(self, message):
-        super(MQTTClient, self).publish(self.publish_topic, message)
+    def publish(self, message, retain=False):
+        super(MQTTClient, self).publish(self.publish_topic, message, 0, retain)
 
     def start_loop(self):
         self.thread = threading.Thread(target=self.loop_forever)

@@ -56,6 +56,12 @@ class Controller:
     def machine_force(self, position):
         self.machine_short_message(position, 'f')
 
+    def machine_sleep(self, posision):
+        self.machine_short_message(position, 's')
+
+    def machine_sleep(self, posision):
+        self.machine_short_message(position, 'w', True)
+
     def machine_assign(self, machine, position):
         self.status.set_machine_to_position(int(machine), int(position))
 
@@ -66,8 +72,8 @@ class Controller:
         self.status.unlink(int(position))
 
     def machine_set(self, position):
-        if self.status.position_is_busy(int(position)):
-            print("The machine is too busy to receive set messages.")
+        if not self.status.position_is_ready(int(position)):
+            print("The machine is not ready to receive set messages.")
         else:
             msg = {
                 'target'        : self.status.get_machine_by_position(int(position)),
@@ -82,7 +88,7 @@ class Controller:
                 msg['score'].append(str(self.status.get_score(player)))
             self.status.set_position_wait(int(position))
             self.mqtt.publish(generator.gen(msg))
-            self.status.set_position_busy(int(position))
+            self.status.set_position_receiving(int(position))
     
     #=================#
     # Controll Status #

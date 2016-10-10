@@ -14,11 +14,15 @@ import json
 class DBAccess:
     config = configuration.SectionConfig('db', 'DB')
 
+    def generate_signature(command_string):
+        signature = hmac.new(DBAccess.config['shakey'].encode('utf-8'),
+                             command_string,
+                             hashlib.sha256).hexdigest()
+        return signature
+
     def request(data):
         command = json.dumps(data).encode('utf-8')
-        signature = hmac.new(DBAccess.config['shakey'].encode('utf-8'),
-                             command,
-                             hashlib.sha256).hexdigest()
+        signature = DBAccess.generate_signature(command)
         message = {'command': command, 'signature': signature}
         response = requests.post(DBAccess.config['url'], data=message)
         print(response.text)

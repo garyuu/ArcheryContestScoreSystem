@@ -9,17 +9,19 @@ import threading
 from enum import Enum
 
 class StateEnum(Enum):
-    unknown = 0
-    ready = 1
-    busy = 2
-    
+    Empty = -1
+    Idle = 0
+    Ready = 1
+    Sleeping = 2
+    Received = 3
+    Receiving = 4
 
 class Position():
     def __init__(self, pid, mid, player_list):
         self.id = pid
         self.machine = mid
         self.players = player_list
-        self.state = StateEnum.unknown
+        self.state = StateEnum.Empty
         self.waiting = False
         self.dead = False
         self.flags = dict()
@@ -30,22 +32,16 @@ class Position():
         string += "M{}. ".format(self.machine)
         string += "State: {}".format(self.state.name)
         string += ", waiting..." if self.waiting else ""
-        if self.state == StateEnum.busy:
-            if self.all_back():
-                string += ", All sent back"
-            else:
-                string += ", Sent back:"
-                for player in self.flags:
-                    string += " {},".format(player)
-                string += " Still {}".format(len(self.players)-len(self.flags))
+        if self.state == StateEnum.Receiving:
+            string += ", Sent back:"
+            for player in self.flags:
+                string += " {},".format(player)
+            string += " Still {}".format(len(self.players)-len(self.flags))
         return string
 
-    def change_state_to_ready(self):
-        self.state = StateEnum.ready
+    def change_state(self, state):
+        self.state = StateEnum[state]
 
-    def change_state_to_busy(self):
-        self.state = StateEnum.busy
-    
     def wait_for_response(self,sec = 10.0):
         self.waiting = True
         self.timer = threading.Timer(sec,self.set_dead)
@@ -69,8 +65,8 @@ class Position():
     def all_back(self):
         return len(self.flags) == len(self.players)
 
-    def is_busy(self):
-        return self.state == StateEnum.busy
+    def is_ready(self):
+        return self.state == StateEnum.Ready
         
 def main():
     pass
