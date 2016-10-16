@@ -5,8 +5,9 @@ Name:   player
 Descr.: To store a player's data.
 '''
 class Player:
-    def __init__(self, id, position, stage, group):
+    def __init__(self, id, tag, postion, stage, group):
         self.id = id
+        self.tag = tag
         self.position = position
         self.stage = stage
         self.group = group

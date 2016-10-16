@@ -165,15 +165,15 @@ class Controller:
         player_data = DBAccess.request(data)
         self.player_list = {}
         for p in player_data:
-            self.player_list[p['position']] = player.Player(p['id'], p['position'], stage, p['group'])
+            self.player_list[p['tag']] = player.Player(p['id'], p['tag'], p['position'], stage, p['group'])
     
     def load_waves(self, stage):
         data = {'action': 'allwavelist',
                 'stage': stage}
         wave_data = DBAccess.request(data)
         for w in wave_data:
-            self.player_list[w['position']].add_wave(p['score'], p['shot1'], p['shot2'], p['shot3'],
-                                                                 p['shot4'], p['shot5'], p['shot6'])
+            self.player_list[w['tag']].add_wave(p['score'], p['shot1'], p['shot2'], p['shot3'],
+                                                            p['shot4'], p['shot5'], p['shot6'])
 
     def build_group_dict(self):
         self.group_dict = {}
