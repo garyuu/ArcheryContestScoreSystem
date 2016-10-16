@@ -10,19 +10,19 @@ import dbaccess
 import random
 
 class MatchMaker:
-    def make(self, player_list, q_to_d=False):
+    def make(self, player_list, bound, q_to_d=False):
         if q_to_d:
-            self.group_make_qtod(player_list)
+            self.group_make_qtod(player_list, bound)
         else:
-            self.group_make_dtod(player_list)
+            self.group_make_dtod(player_list, bound)
 
-    def make_qtod(self, group):
+    def make_qtod(self, player_list, bound):
         # TODO MM from qualifying to dual match
         player_list.sort(cmp)
 
         pass
 
-    def make_dtod(self, group):
+    def make_dtod(self, player_list, bound):
         # TODO MM to eliminate players from dual match
         pass
 
