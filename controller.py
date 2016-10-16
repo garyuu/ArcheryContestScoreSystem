@@ -10,21 +10,31 @@ import message_parser as parser
 import message_generator as generator
 import status
 import threading
+import dbaccess
 
 class Controller:
     def __init__(self):
         self.config = configuration.Config('settings')
+        slef.group_bound = {}
         self.load_config()
         self.stage_iter = iter(self.schedule)
         self.current_stage = next(self.stage_iter)
+        self.substage = ''
 
-        # Launch MQTT client
+        print("Initializing MQTT client...")
         m_conf = configuration.SectionConfig('settings', 'MQTT')
         self.mqtt = MQTTClient(m_conf)
         self.mqtt.on_message = self.mqtt_on_message
         self.mqtt.connect()
 
-        # Launch status
+        print("Preparing player data...")
+        self.player_list = []
+        self.group_dict = {}
+        self.load_player_list(self.current_stage + self.substage)
+        self.load_waves(self.current_stage + self.substage)
+        self.build_group_dict()
+
+        print("Initializing status...")
         self.status = status.Status(self.get_total_number_of_position())
         self.status.check = self.all_sent_back_check
         self.status_setstage()
@@ -59,7 +69,7 @@ class Controller:
     def machine_sleep(self, posision):
         self.machine_short_message(position, 's')
 
-    def machine_sleep(self, posision):
+    def machine_wake(self, posision):
         self.machine_short_message(position, 'w', True)
 
     def machine_assign(self, machine, position):
@@ -140,10 +150,38 @@ class Controller:
 
     def load_config(self):
         self.schedule = self.config.get('Contest', 'schedule').split(',')
-        self.groups = {}
+        self.group_bound = {}
         groups = self.config.get('Contest', 'groups').split(',')
+        offset = 0
         for group in groups:
-            self.groups[group] = self.config.getint('Group', group)
+            size = self.config.getint('Group', group)
+            self.group_bound[group] = (1 + offset, size + offset)
+            offset += size
+
+    def load_player_list(self, stage, team_mode=False):
+        data = {'action': 'allplayerlist',
+                'stage': stage,
+                'team': team_mode}
+        player_data = DBAccess.request(data)
+        self.player_list = {}
+        for p in player_data:
+            self.player_list[p['position']] = player.Player(p['id'], p['position'], stage, p['group'])
+    
+    def load_waves(self, stage):
+        data = {'action': 'allwavelist',
+                'stage': stage}
+        wave_data = DBAccess.request(data)
+        for w in wave_data:
+            self.player_list[w['position']].add_wave(p['score'], p['shot1'], p['shot2'], p['shot3'],
+                                                                 p['shot4'], p['shot5'], p['shot6'])
+
+    def build_group_dict(self):
+        self.group_dict = {}
+        for g in self.group_bound:
+            self.group_dict[g] = {'bound': self.group_bound[g], 'players': []}
+            for p in self.player_list:
+                if p.group == g:
+                    self.group_dict[g]['players'].append(p)
             
     def get_total_number_of_position(self):
         total = 0
