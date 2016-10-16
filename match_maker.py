@@ -18,8 +18,15 @@ class MatchMaker:
 
     def group_make_qtod(self, group):
         # TODO MM from qualifying to dual match
+
+
         pass
 
     def group_make_dtod(self, group):
         # TODO MM to eliminate players from dual match
         pass
+
+    def cmp(a,b):
+        if a.total != b.total:
+            return a.total<b.total
+        else:
