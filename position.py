@@ -6,6 +6,7 @@ Descr.: The object that serves as a signal/timer thingy
 '''
 #import time
 import threading
+import math
 from enum import Enum
 
 class StateEnum(Enum):
@@ -17,30 +18,42 @@ class StateEnum(Enum):
     Receiving = 4
 
 class Position():
-    def __init__(self, pid, mid, player_list):
+    def __init__(self, pid, mid):
         self.id = pid
         self.machine = mid
-        self.players = player_list
+        self.players = []
         self.state = StateEnum.Empty
         self.waiting = False
         self.dead = False
-        self.flags = dict()
-    
-    def __str__(self):
-        string = "{}: ".format(self.id)
-        string += "[X]" if self.dead else "[ ]"
-        string += "M{}. ".format(self.machine)
-        string += "State: {}".format(self.state.name)
-        string += ", waiting..." if self.waiting else ""
-        if self.state == StateEnum.Receiving:
-            string += ", Sent back:"
-            for player in self.flags:
-                string += " {},".format(player)
-            string += " Still {}".format(len(self.players)-len(self.flags))
-        return string
 
     def change_state(self, state):
         self.state = StateEnum[state]
+
+    def save_wave(self, tag, shots):
+        for p in self.players:
+            if p.tag == tag:
+                p.add_wave_from_list(shots)
+
+    def calculate_score(self, rule):
+        for p in self.players:
+            p.latest_wave_sum()
+        if rule.game_mode == 'D':
+            #  Assume that each dual match has only 2 players/teams.
+            if self.players[0].score_list[-1] > self.players[1].score_list[-1]:
+                self.players[0].score_list[-1] = rule.win_point
+                self.players[1].score_list[-1] = rule.lose_point
+            elif self.players[0].score_list[-1] < self.players[1].score_list[-1]:
+                self.players[1].score_list[-1] = rule.win_point
+                self.players[0].score_list[-1] = rule.lose_point
+            else:
+                self.players[0].score_list[-1] = rule.draw_point
+                self.players[1].score_list[-1] = rule.draw_point
+            if self.players[0].total_score() == rule.goal_point:
+                self.players[0].winner = True
+            if self.players[1].total_score() == rule.goal_point:
+                self.players[1].winner = True
+        self.players[0].latest_wave_save()
+        self.players[1].latest_wave_save()
 
     def wait_for_response(self,sec = 10.0):
         self.waiting = True
@@ -55,18 +68,17 @@ class Position():
         self.waiting = False
         self.dead = False
     
-    def set_player_flag(self, player):
-        if player in self.players:
-            self.flags[player] = True
-
-    def reset_flags(self):
-        self.flags = dict()
-
-    def all_back(self):
-        return len(self.flags) == len(self.players)
+    def all_back(self, wave):
+        for p in self.players:
+            if p.wave_count != wave:
+                return False
+        return True
 
     def is_ready(self):
         return self.state == StateEnum.Ready
+
+    def has_winner(self):
+        return self.players[0].winner or self.players[1].winner
         
 def main():
     pass

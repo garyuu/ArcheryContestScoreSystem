@@ -159,21 +159,24 @@ class Controller:
             offset += size
 
     def load_player_list(self, stage, team_mode=False):
-        data = {'action': 'allplayerlist',
-                'stage': stage,
-                'team': team_mode}
-        player_data = DBAccess.request(data)
+        db_msg = {'action': 'allplayerlist',
+                  'stage': stage,
+                  'team': team_mode}
+        player_data = DBAccess.request(db_msg)
         self.player_list = {}
         for p in player_data:
             self.player_list[p['tag']] = player.Player(p['id'], p['tag'], p['position'], stage, p['group'])
     
     def load_waves(self, stage):
-        data = {'action': 'allwavelist',
-                'stage': stage}
-        wave_data = DBAccess.request(data)
+        db_msg = {'action': 'allwavelist',
+                  'stage': stage}
+        wave_data = DBAccess.request(db_msg)
         for w in wave_data:
-            self.player_list[w['tag']].add_wave(p['score'], p['shot1'], p['shot2'], p['shot3'],
-                                                            p['shot4'], p['shot5'], p['shot6'])
+            player = self.player_list[w['tag']]
+            player.add_wave(w['shot1'], w['shot2'], w['shot3'],
+                            w['shot4'], w['shot5'], w['shot6'])
+            player.add_score(w['score'])
+            player.winner = player.winner or w['winner']
 
     def build_group_dict(self):
         self.group_dict = {}
