@@ -9,6 +9,7 @@ from configuration import SectionConfig
 
 class Rule:
     def __init__(self, stage, rulename):
+        self.machine_mode = 0
         self.game_mode = ''
         self.total_waves = 0
         self.shots_per_wave = 0
@@ -20,6 +21,7 @@ class Rule:
 
     def load_stage_rule(self, stage, rulename)
         config = SectionConfig("rules/"+rulename, stage)
+        self.machine_mode = config['machinemode']
         self.game_mode = config['mode']
         self.total_waves = config['waves']
         self.shots_per_wave = config['shots']

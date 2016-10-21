@@ -97,11 +97,20 @@ class Status:
 
     def clear(self):
         self.wave = 0
+        for pos in self.positions:
+            pos.clear_player_data()
         self.build_position_list()
         self.save_config()
 
     def next_wave(self):
-        self.current_wave += 1
+        if self.current_wave < self.rule.total_waves:
+            self.current_wave += 1
+        elif self.rule.game_mode == 'D' && self.current_wave < self.rule.total_waves + 1:
+            self.current_wave += 1
+        else:
+            printf("Already have been in last wave.")
+            printf("Call 'next_stage' to start next stage,")
+            printf("or 'clear_stage' to restart the stage.")
         self.save_config()
 
     def position_is_ready(self, position):

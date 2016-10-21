@@ -4,7 +4,6 @@ Date:   2016/8/15
 Name:   position
 Descr.: The object that serves as a signal/timer thingy
 '''
-#import time
 import threading
 import math
 from enum import Enum
@@ -25,6 +24,9 @@ class Position():
         self.state = StateEnum.Empty
         self.waiting = False
         self.dead = False
+
+    def player_number(self):
+        return self.player_list
 
     def change_state(self, state):
         self.state = StateEnum[state]
@@ -79,6 +81,10 @@ class Position():
 
     def has_winner(self):
         return self.players[0].winner or self.players[1].winner
+
+    def clear_player_data(self):
+        # TODO Method to clear all players' data in this position.
+        pass
         
 def main():
     pass

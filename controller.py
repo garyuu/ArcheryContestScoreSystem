@@ -73,7 +73,11 @@ class Controller:
         self.machine_short_message(position, 'w', True)
 
     def machine_assign(self, machine, position):
-        self.status.set_machine_to_position(int(machine), int(position))
+        if self.status.machines[position] != 0:
+            self.status.set_machine_to_position(int(machine), int(position))
+        else:
+            print("Warning: machine #{} tried to link to position #{},").format(machine, position)
+            print("         But the position is already assigned to machine #{}.").format(self.status.machines[position])
 
     def machine_assign_auto(self):
         self.status.set_machine_auto()
@@ -86,11 +90,11 @@ class Controller:
             print("The machine is not ready to receive set messages.")
         else:
             msg = {
-                'target'        : self.status.get_machine_by_position(int(position)),
-                'mode'          : str(self.status.get_mode()),
-                'wave'          : str(self.status.get_wave()),
+                'target'        : self.status.get:_machine_by_position(int(position)),
+                'mode'          : str(self.status.rule.machine_mode),
+                'wave'          : str(self.status.current_wave),
                 'position'      : position,
-                'num_players'   : self.status.get_number_of_players_of_position(int(position)),
+                'num_players'   : len(self.status.positions[int(position)].player_list),
                 'score'         : [],
             }
 
