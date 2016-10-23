@@ -10,6 +10,7 @@ import message_parser as parser
 import message_generator as generator
 import status
 import threading
+import match_maker
 import dbaccess
 
 class Controller:
@@ -121,6 +122,9 @@ class Controller:
             self.current_stage = next(self.stage_iter)
         except:
             print("Already in end stage.")
+            return
+        if self.status.rule.mode == 'Q':
+            
 
     def status_setstage(self):
             self.status.set_mode(self.current_stage)
