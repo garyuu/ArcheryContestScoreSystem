@@ -41,12 +41,65 @@ class MatchMaker:
         return result
 
     def make_dtod(self, player_list, bound):
-        # TODO MM to eliminate players from dual match
-        pass
+        player_num = len(player_list)
+        current_rank_of_position = self.position_of_rank_generator(player_num, bound, True)
+        new_position_of_rank = self.position_of_rank_generator(player_num/2, bound)
+        result = []
+        for p in player_list:
+            if p.winner:
+                new_pos = new_position_of_rank[current_rank_of_position[p.position]]
+                result.append((p.tag, new_pos))
+        return result
+
+    def position_of_rank_generator(size, bound, reverse=False, rec=False):
+        if rec:
+            if size == 1:
+                return [[1,2]]
+            else
+                table = self.position_of_rank_generator(size/2, None, False, True)
+                result = []
+                for x in table:
+                    for y in x:
+                        result.append([y, size*2+1-y])
+                return result
+        else:
+            one_by_one = 4  # Set below(include) how many size assign one position for one player
+            table = self.position_of_rank_generator(size, None, False, True)
+            pos_num = bound[1] - bound[0] + 1
+            while pos_num & (-pos_num) != pos_num:
+                pos_num -= pos_num & (-pos_num)
+            result = {}
+            if size > one_by_one:
+                if size == 1:
+                    start = (pos_num - 2) / 2 + bound[0]
+                    table.append([3,4])
+                else:
+                    start = (pos_num - size) / 2 + bound[0]
+                for x in range(0, len(table)):
+                    for y in table[x]:
+                        result[y] = x + start
+            else:
+                if size == 1:
+                    start = (pos_num - 4) / 2 + bound[0]
+                    table.append([3,4])
+                else:
+                    start = (pos_num - size * 2) / 2 + bound[0]
+                i = start
+                for x in table:
+                    for y in x:
+                        result[y] = i
+                        i += 1
+            if reverse:
+                origin_result = result
+                result = {}
+                for rank in origin_result:
+                    if rank <= size:
+                        result[origin_result[rank]] = rank
+            return result
 
     def cmp(a,b):
-        if a.total != b.total:
-            return a.total - b.total
+        if a.total_score() != b.total_score():
+            return a.total_score() - b.total_score()
         else:
             a_ten = 0
             a_elev = 0
