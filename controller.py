@@ -10,7 +10,7 @@ import message_parser as parser
 import message_generator as generator
 import status
 import threading
-import match_maker
+from match_maker import MatchMaker
 import dbaccess
 
 class Controller:
@@ -118,17 +118,12 @@ class Controller:
         self.status.next_wave()
 
     def status_nextstage(self):
-        try:
-            self.current_stage = next(self.stage_iter)
-        except:
-            print("Already in end stage.")
-            return
-        if self.status.rule.mode == 'Q':
-            
-
-    def status_setstage(self):
-            self.status.set_mode(self.current_stage)
-            self.status.set_substage('')
+        if self.status.rule.mode == 'Q':  # Qualifying to Dual Match
+            self.nextstage_qtod()
+        elif self.status.substage == '1': # End of Dual Match
+            self.nextstage_dend()
+        else:                             # Dual Match progress
+            self.nextstage_dtod()
 
     def status_display(self):
         print(self.status)
@@ -186,6 +181,13 @@ class Controller:
             player.add_score(w['score'])
             player.winner = player.winner or w['winner']
 
+    def load_team_base_score(self):
+        db_msg = {'action': 'teamscorelist',
+                  'stage': self.schedule[0]}
+        score_data = DBAccess.request(db_msg)
+        for s in score_data:
+            self.player_list[s['t_tag']].add_score(s['score'])
+
     def build_group_dict(self):
         self.group_dict = {}
         for g in self.group_bound:
@@ -199,3 +201,49 @@ class Controller:
         for group in self.groups:
             total += self.groups[group]
         return total
+
+    def completed_stage(self):
+        return self.current_stage+self.substage
+
+    def nextstage_qtod(self):
+        try:
+            self.current_stage = next(self.stage_iter)
+        except:
+            print("Already in end stage.")
+            return
+        self.substage = 0
+        for group in self.group_dict:
+            size = MatchMaker.make(group['players'], group['bound'], True)
+            if size > self.substage:
+                self.substage = size
+        self.substage = str(self.substage)
+        self.load_player_list(self.completed_stage())
+        self.build_group_dict()
+        self.status.new_stage(self.current_stage, self.substage, self.player_list)
+
+    def nextstage_dend(self):
+        try:
+            self.current_stage = next(self.stage_iter)
+        except:
+            print("Already in end stage.")
+            return
+        self.substage = ''
+        self.load_player_list(self.completed_stage(), True)
+        self.load_team_base_score()
+        self.build_group_dict()
+        for group in self.group_dict:
+            size = MatchMaker.make(group['players'], group['bound'], True, True)
+            if size > self.substage:
+                self.substage = size
+        self.substage = str(self.substage)
+        self.load_player_list(self.completed_stage())
+        self.build_group_dict()
+        self.status.new_stage(self.current_stage, self.substage, self.player_list)
+
+    def nextstage_dtod(self):
+        for group in self.group_dict:
+            MatchMaker.make(group['players'], group['bound'])
+        self.substage = str(int(self.substage) / 2)
+        self.load_player_list(self.completed_stage())
+        self.build_group_dict()
+        self.status.new_stage(self.current_stage, self.substage, self.player_list)
