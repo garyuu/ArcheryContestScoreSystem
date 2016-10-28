@@ -28,12 +28,12 @@ class Status:
     #=====#
     # Set #
     #=====#
-    def new_stage(self, stage, substage):
+    def new_stage(self, stage, substage, player_list):
         self.stage = stage
         self.substage = substage
-        self.current_wave = 0
+        self.player_list = player_list
         self.rule.load_stage_rule(self.stage, self.rulename)
-        self.save_config()
+        self.clear()
 
     def set_machine_auto(self):
         idle_machine = self.num_pos + 1
