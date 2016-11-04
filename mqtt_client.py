@@ -42,7 +42,7 @@ class MQTTClient(mqtt.Client):
     def start_loop(self):
         self.thread = threading.Thread(target=self.loop_forever)
         self.thread.start()
-
+'''
 def main():
     from configuration import SectionConfig
     config = SectionConfig('settings', 'MQTT')
@@ -51,7 +51,8 @@ def main():
     a = input("-->")
     c.publish(a)
     c.disconnect()
-    
+ 
 
 if __name__ == "__main__":
     main()
+'''
