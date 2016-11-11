@@ -40,7 +40,6 @@ class Player:
             'wave'      : self.wave_count,
             'tag'       : self.tag,
             'stage'     : self.stage,
-            'position'  : self.position,
             'score'     : self.score_list[-1],
             'shots'     : self.wave_list[-1],
             'winner'    : self.winner,
