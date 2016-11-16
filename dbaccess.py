@@ -29,7 +29,11 @@ class DBAccess:
         return json.loads(response.text)
 
 def main():
-    data = {"A": 123, "ZZZ": "AAAAAsadsa"}
+    data = {
+        'action': 'allplayerlist',
+        'stage': 'practice',
+        'team': False,
+    }
     print(DBAccess.request(data))
 
 if __name__ == '__main__':

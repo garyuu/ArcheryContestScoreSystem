@@ -13,31 +13,45 @@ import random
 class MatchMaker:
     def make(self, player_list, bound, q_to_d=False):
         if q_to_d:
-            self.group_make_qtod(player_list, bound)
+            result = self.group_make_qtod(player_list, bound)
         else:
-            self.group_make_dtod(player_list, bound)
+            result = self.group_make_dtod(player_list, bound)
+        return result
 
     def make_qtod(self, player_list, bound):
         player_list.sort(key=MatchMaker.cmp_to_key(MatchMaker.cmp))
+
+        promote_num = len(player_list) #get total # of players
+
+        while promote_num & (-promote_num) != promote_num: #if promote is not 2**k, turn into 2**k
+            promote_num -= promote_num & (-promote_num)
 
         pos_num = bound[1] - bound[0] + 1 #get total # of position
 
         while pos_num & (-pos_num) != pos_num: #if pos is not 2**k, turn into 2**k
             pos_num -= pos_num & (-pos_num)
-
-        player_list = player_list[0:pos_num*2]
-
-        for idx in range(0,pos_num//2):
-            player_list[idx*2].position = pos_num//2 + (bound[0] - 1) - idx
-            player_list[-idx*2-1].position = pos_num//2 + (bound[0] - 1) - idx
-            # 1 vs 16 at 4
-            player_list[idx*2 + 1].position = pos_num//2 + (bound[0] - 1) + idx + 1
-            player_list[-idx*2 - 2].position = pos_num//2 + (bound[0] - 1) + idx + 1
-            # 2 vs 15 at 5
-            
+        
+        i = 0
         result = []
-        for idx in range(0,pos_num*2):
-            result.append((player_list[idx].tag,player_list[idx].position))
+        while i * 2 <= promote_num:
+            player_sublist = player_list[i:i+pos_num*2]
+
+            for idx in range(0,pos_num//2):
+                player_sublist[idx*2].position = pos_num//2 + (bound[0] - 1) - idx
+                player_sublist[-idx*2-1].position = pos_num//2 + (bound[0] - 1) - idx
+                # 1 vs 16 at 4
+                player_sublist[idx*2 + 1].position = pos_num//2 + (bound[0] - 1) + idx + 1
+                player_sublist[-idx*2 - 2].position = pos_num//2 + (bound[0] - 1) + idx + 1
+                # 2 vs 15 at 5
+            
+            for idx in range(0,pos_num*2):
+                if i > 0:
+                    result.append((player_sublist[idx].tag,player_sublist[idx].position, True))
+                else:
+                    result.append((player_sublist[idx].tag,player_sublist[idx].position))
+
+            i += pos_num*2
+
         return result
 
     def make_dtod(self, player_list, bound):
@@ -50,6 +64,25 @@ class MatchMaker:
                 new_pos = new_position_of_rank[current_rank_of_position[p.position]]
                 result.append((p.tag, new_pos))
         return result
+
+    def send_stage_positions(self, result, stage, team):
+        db_msg = {
+            'action' = 'savestageposition',
+            'table' = [],
+            'team' = team,
+        }
+        for row in result:
+            data = {
+                'stage': stage + str(len(result)),
+                'tag': row[0],
+                'position': row[1],
+            }
+            if len(row) > 2:
+                data['filter'] = stage +  str(row[2]))
+            else:
+                data['filter'] = None
+            db_msg['table'].append(data)
+        DBAccess.request(db_msg)
 
     def position_of_rank_generator(size, bound, reverse=False, rec=False):
         if rec:

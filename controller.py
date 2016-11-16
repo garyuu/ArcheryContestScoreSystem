@@ -9,6 +9,7 @@ from mqtt_client import MQTTClient
 import message_parser as parser
 import message_generator as generator
 import status
+import rule
 import threading
 from match_maker import MatchMaker
 import dbaccess
@@ -16,7 +17,6 @@ import dbaccess
 class Controller:
     def __init__(self):
         self.config = configuration.Config('settings')
-        slef.group_bound = {}
         self.load_config()
         self.stage_iter = iter(self.schedule)
         self.current_stage = next(self.stage_iter)
@@ -36,7 +36,7 @@ class Controller:
         self.build_group_dict()
 
         print("Initializing status...")
-        self.status = status.Status(self.get_total_number_of_position())
+        self.status = status.Status(self.get_total_number_of_position(), self.current_stage, self.rulename)
         self.status.check = self.all_sent_back_check
         self.status_setstage()
     
@@ -118,12 +118,22 @@ class Controller:
         self.status.next_wave()
 
     def status_nextstage(self):
-        if self.status.rule.mode == 'Q':  # Qualifying to Dual Match
-            self.nextstage_qtod()
-        elif self.status.substage == '1': # End of Dual Match
-            self.nextstage_dend()
-        else:                             # Dual Match progress
-            self.nextstage_dtod()
+        if self.status.rule.mode == 'Q' and self.conflict():
+            return
+        if self.status.rule.mode == 'Q' or self.status.substage == '1': # End of a stage
+            self.nextstage_new()
+        else: # Move to next round
+            self.nextstage_promotion()
+        self.load_player_list(self.completed_stage())
+        self.build_group_dict()
+        self.status.new_stage(self.current_stage, self.substage, self.player_list)
+
+    def status_change_group_position_number(self, group, number):
+        if group in self.group_name_list:
+            self.config.set('Group', group, number)
+            self.build_group_bound()
+        else:
+            print("There is no group labeled \"{}\".".format(group))
 
     def status_display(self):
         print(self.status)
@@ -131,6 +141,41 @@ class Controller:
     #=========#
     # Methods #
     #=========#
+    def conflict_cmp(self, a, b):
+        if a.total_score != b.total_score:
+            return False
+        ten_count = 0
+        x_count = 0
+        for i in a.wave_list:
+            for j in i:
+                if j >= 10:
+                    ten_count += 1
+                if j > 10:
+                    x_count += 1
+        for i in b.wave_list:
+            for j in i:
+                if j >= 10:
+                    ten_count -= 1
+                if j > 10:
+                    x_count -= 1
+        return not (ten_count or x_count)
+
+    def conflict(self):
+        for g in self.group_dict:
+            plist = list(g['player'])
+            while len(plist) > 0:
+                tmp = [plist[0]]
+                plist.remove(tmp[0])
+                for p in plist:
+                    if conflict_cmp(tmp[0], p):
+                        tmp.append(p)
+                        p.remove(tmp[-1])
+                if len(tmp) > 1:
+                    msg = "Conflict:"
+                    for t in tmp:
+                        msg += " " + t.tag
+                    print(msg)
+
     def destroy(self):
         self.mqtt.disconnect()
 
@@ -152,14 +197,9 @@ class Controller:
         self.mqtt.publish(generator.gen(msg))
 
     def load_config(self):
+        self.rulename = self.config.get('Contest', 'standard')
         self.schedule = self.config.get('Contest', 'schedule').split(',')
-        self.group_bound = {}
-        groups = self.config.get('Contest', 'groups').split(',')
-        offset = 0
-        for group in groups:
-            size = self.config.getint('Group', group)
-            self.group_bound[group] = (1 + offset, size + offset)
-            offset += size
+        self.group_name_list = self.config.get('Contest', 'groups').split(',')
 
     def load_player_list(self, stage, team_mode=False):
         db_msg = {'action': 'allplayerlist',
@@ -181,20 +221,28 @@ class Controller:
             player.add_score(w['score'])
             player.winner = player.winner or w['winner']
 
-    def load_team_base_score(self):
+    def load_team_base_score(self, stage):
         db_msg = {'action': 'teamscorelist',
-                  'stage': self.schedule[0]}
+                  'stage': stage}
         score_data = DBAccess.request(db_msg)
         for s in score_data:
             self.player_list[s['t_tag']].add_score(s['score'])
 
     def build_group_dict(self):
         self.group_dict = {}
-        for g in self.group_bound:
-            self.group_dict[g] = {'bound': self.group_bound[g], 'players': []}
+        for g in self.group_name_list:
+            self.group_dict[g] = {'bound': None, 'players': []}
             for p in self.player_list:
                 if p.group == g:
                     self.group_dict[g]['players'].append(p)
+        build_group_bound()
+
+    def build_group_bound(self):
+        offset = 0
+        for g in self.group_name_list:
+            size = self.config.getint('Group', g)
+            self.group_dict[g]['bound'] = (1+offset, size+offset)
+            offset += 1
             
     def get_total_number_of_position(self):
         total = 0
@@ -205,45 +253,28 @@ class Controller:
     def completed_stage(self):
         return self.current_stage+self.substage
 
-    def nextstage_qtod(self):
+    def nextstage_new(self):
         try:
             self.current_stage = next(self.stage_iter)
         except:
             print("Already in end stage.")
             return
-        self.substage = 0
-        for group in self.group_dict:
-            size = MatchMaker.make(group['players'], group['bound'], True)
-            if size > self.substage:
-                self.substage = size
-        self.substage = str(self.substage)
-        self.load_player_list(self.completed_stage())
-        self.build_group_dict()
-        self.status.new_stage(self.current_stage, self.substage, self.player_list)
+        current_rule = rule.Rule(current_stage, self.rulename)
+        if current_rule.game_mode == 'D':
+            self.substage = 0
+            if current_rule.team_size > 1:
+                self.load_player_list(current_stage, True)
+                self.build_group_dict()
+                self.load_team_base_score(current_rule.reference)
+            for group in self.group_dict:
+                result = MatchMaker.make(group['players'], group['bound'], current_rule.team_size > 1)
+                if len(result) > self.substage:
+                    self.substage = len(result)
+                MatchMaker.send_stage_positions(result, self.current_stage, current_rule.team_size > 1)
+            self.substage = str(self.substage)
 
-    def nextstage_dend(self):
-        try:
-            self.current_stage = next(self.stage_iter)
-        except:
-            print("Already in end stage.")
-            return
-        self.substage = ''
-        self.load_player_list(self.completed_stage(), True)
-        self.load_team_base_score()
-        self.build_group_dict()
+    def nextstage_promotion(self):
         for group in self.group_dict:
-            size = MatchMaker.make(group['players'], group['bound'], True, True)
-            if size > self.substage:
-                self.substage = size
-        self.substage = str(self.substage)
-        self.load_player_list(self.completed_stage())
-        self.build_group_dict()
-        self.status.new_stage(self.current_stage, self.substage, self.player_list)
-
-    def nextstage_dtod(self):
-        for group in self.group_dict:
-            MatchMaker.make(group['players'], group['bound'])
-        self.substage = str(int(self.substage) / 2)
-        self.load_player_list(self.completed_stage())
-        self.build_group_dict()
-        self.status.new_stage(self.current_stage, self.substage, self.player_list)
+            result = MatchMaker.make(group['players'], group['bound'])
+            MatchMaker.send_stage_positions(result, self.current_stage, self.status.rule.team_size)
+        self.substage = str(int(self.substage) // 2)

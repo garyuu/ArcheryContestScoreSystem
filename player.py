@@ -54,3 +54,10 @@ class Player:
         for i in score_list:
             total += i
         return total
+
+def main():
+    p = Player(1, 1A, )
+    pass
+
+if __name__ == '__main__':
+    main()
