@@ -25,6 +25,15 @@ class Position():
         self.waiting = False
         self.dead = False
 
+    def __str__(self):
+        print(self.line_status())
+        for p in self.players:
+            print(p)
+
+    def line_status(self):
+        dead = 'X' if self.dead else ' '
+        return "{}:M{2}:[{}], {}".format(self.id, self.machine, dead, self.state.name)
+
     def player_number(self):
         return self.player_list
 

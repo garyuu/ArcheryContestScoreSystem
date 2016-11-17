@@ -16,6 +16,11 @@ class Player:
         self.score_list = []
         self.winner = False
 
+    def __str__(self):
+        print("{}- Group: {} Winner: {} Total score: {}".format(
+            self.tag, self.group, self.winner, self.total_score()))
+        print("    Last wave: {}".format(self.wave_list[-1] + str(score_list[-1])))
+
     def add_wave(self, shot1=-1, shot2=-1, shot3=-1, shot4=-1, shot5=-1, shot6=-1):
         self.wave_list.append([shot1, shot2, shot3, shot4, shot5, shot6])
 

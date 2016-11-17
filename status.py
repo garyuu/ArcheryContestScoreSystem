@@ -25,6 +25,16 @@ class Status:
         self.machines = []
         self.build_position_list()
 
+    def __str__(self):
+        print('Stage: {}-{}'.format(self.rule.stage, self.rule.substage))
+        print('Wave: {}-{}'.format(self.current_wave, self.rule.waves))
+        linecnt = 0
+        for p in self.positions:
+            if linecnt >= 3:
+                print(p.line_status())
+                linecnt = 0
+            print(p,line_status(), end=" ")
+
     #=====#
     # Set #
     #=====#
@@ -103,14 +113,12 @@ class Status:
         self.save_config()
 
     def next_wave(self):
-        if self.current_wave < self.rule.total_waves:
-            self.current_wave += 1
-        elif self.rule.game_mode == 'D' && self.current_wave < self.rule.total_waves + 1:
+        if self.current_wave < self.rule.total_waves + 1:
             self.current_wave += 1
         else:
             printf("Already have been in last wave.")
-            printf("Call 'next_stage' to start next stage,")
-            printf("or 'clear_stage' to restart the stage.")
+            printf("Call 'changestage' to start next stage,")
+            printf("or 'clear' to restart the stage.")
         self.save_config()
 
     def position_is_ready(self, position):
@@ -125,5 +133,8 @@ class Status:
             config.write(configfile)
 
     def unlink(self, position):
-        self.position[position].machine = 0
+        self.positions[position].machine = 0
         self.machines[position] = 0
+
+    def need_to_be_set(self, position):
+        return self.positions[position].player_number() and not self.positions[position].has_winner()
