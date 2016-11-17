@@ -59,19 +59,39 @@ class Controller:
             self.mqtt.publish(generator.gen(msg))
 
     def machine_reset(self, position):
-        self.machine_short_message(position, 'r')
+        if position == 'all':
+            for i in range(1, self.get_total_number_of_position()):
+                self.machine_short_message(i, 'r')
+        else:
+            self.machine_short_message(position, 'r')
 
     def machine_hello(self, position):
-        self.machine_short_message(position, 'h')
+        if position == 'all':
+            for i in range(1, self.get_total_number_of_position()):
+                self.machine_short_message(i, 'h')
+        else:
+            self.machine_short_message(position, 'h')
 
     def machine_force(self, position):
-        self.machine_short_message(position, 'f')
+        if position == 'all':
+            for i in range(1, self.get_total_number_of_position()):
+                self.machine_short_message(i, 'f')
+        else:
+            self.machine_short_message(position, 'f')
 
     def machine_sleep(self, posision):
-        self.machine_short_message(position, 's')
+        if position == 'all':
+            for i in range(1, self.get_total_number_of_position()):
+                self.machine_short_message(i, 's')
+        else:
+            self.machine_short_message(position, 's')
 
     def machine_wake(self, posision):
-        self.machine_short_message(position, 'w', True)
+        if position == 'all':
+            for i in range(1, self.get_total_number_of_position()):
+                self.machine_short_message(i, 'w')
+        else:
+            self.machine_short_message(position, 'w', True)
 
     def machine_assign(self, machine, position):
         if self.status.machines[position] != 0:
@@ -88,8 +108,8 @@ class Controller:
 
     def machine_set(self, position):
         if not self.status.position_is_ready(int(position)):
-            print("The machine is not ready to receive set messages.")
-        else:
+            print("Position {} is not ready to receive set messages.".format(position))
+        elif self.status.need_to_be_set(position):
             msg = {
                 'target'        : self.status.get:_machine_by_position(int(position)),
                 'mode'          : str(self.status.rule.machine_mode),
@@ -116,6 +136,8 @@ class Controller:
 
     def status_nextwave(self):
         self.status.next_wave()
+        for i in range(1, self.get_total_number_of_position()+1):
+            self.machine_set(i)
 
     def status_nextstage(self):
         if self.status.rule.mode == 'Q' and self.conflict():
@@ -136,6 +158,9 @@ class Controller:
             print("There is no group labeled \"{}\".".format(group))
 
     def status_display(self):
+        print("Group")
+        for g in self.groupname:
+            print("{}: {} ".format(g, self.config.get('Group', g)))
         print(self.status)
 
     #=========#
@@ -246,8 +271,8 @@ class Controller:
             
     def get_total_number_of_position(self):
         total = 0
-        for group in self.groups:
-            total += self.groups[group]
+        for group in self.group_name_list:
+            total += self.config.get('Group', group)
         return total
 
     def completed_stage(self):
