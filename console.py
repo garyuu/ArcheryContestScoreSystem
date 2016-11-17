@@ -13,89 +13,131 @@ class ScoringConsole(cmd.Cmd):
         cmd.Cmd.__init__(self)
         self.prompt = '-->'
         self.ctrl = Controller()
+        self.args = []
+
+    def parse(self, line, arg_num):
+        self.args = line.split()
+        if len(args) < arg_num:
+            print('Need at least {} arguments.'.format(arg_num[0]))
+        elif len(args) > arg_num:
+            print('Too many argument! At most {} arguments.'.format(arg_num[1]))
+        else
+            return True
+        return False
 
     def do_exit(self, argstr):
-        self.ctrl.destroy()
-        sys.exit(1)
+        if self.parse(argstr, 0)
+            self.ctrl.destroy()
+            sys.exit(1)
 
     def do_reset(self, argstr):
-        args = argstr.split()
-        if len(args) == 0:
-            print('The command should have 1 argument.')
-        elif len(args) > 1:
-            print('Too many arguments.')
-        elif args[0] == 'all' or args[0].isnumeric():
-            self.ctrl.machine_reset(args[0])
-        else:
-            print('The argument should be numeric or all.')
+        if self.parse(argstr, 1):
+            try:
+                self.ctrl.machine_reset(int(self.args[0]))
+            except:
+                print("The argument should be numeric.")
+    
+    def do_resetall(self, argstr):
+        if self.parse(argstr, 0):
+            self.ctrl.machine_reset('all')
 
     def do_hello(self, argstr):
-        args = argstr.split()
-        if len(args) == 0:
-            print('The command should have 1 argument.')
-        elif len(args) > 1:
-            print('Too many arguments.')
-        elif args[0] == 'all' or args[0].isnumeric():
-            self.ctrl.machine_hello(args[0])
-        else:
-            print('The argument should be numeric or all.')
+        if self.parse(argstr, 1):
+            try:
+                self.ctrl.machine_hello(int(self.args[0]))
+            except:
+                print("The argument should be numeric.")
+
+    def do_helloall(self, argstr):
+        if self.parse(argstr, 0):
+            self.ctrl.machine_hello('all')
 
     def do_force(self, argstr):
-        args = argstr.split()
-        if len(args) < 1:
-            print('This command should have at least 1 argument.')
-        elif len(args) > 1:
-            print('Too many arguments.')
-        elif args[0] == 'all' or args[0].isnumeric():
-            self.ctrl.machine_force(args[0])
-        else:
-            print('The argument should be numeric or all.')
+        if self.parse(argstr, 1):
+            try:
+                self.ctrl.machine_force(int(self.args[0]))
+            except:
+                print("The argument should be numeric.")
+
+    def do_forceall(self, argstr):
+        if self.parse(argstr, 0):
+            self.ctrl.machine_force('all')
+
+    def do_sleep(self, argstr):
+        if self.parse(argstr, 1):
+            try:
+                self.ctrl.machine_sleep(int(self.args[0]))
+            except:
+                print("The argument should be numeric.")
+
+    def do_sleepall(self, argstr):
+        if self.parse(argstr, 0):
+            self.ctrl.machine_sleep('all')
+
+    def do_wake(self, argstr):
+        if self.parse(argstr, 1):
+            try:
+                self.ctrl.machine_wake(int(self.args[0]))
+            except:
+                print("The argument should be numeric.")
+
+    def do_wakeall(self, argstr):
+        if self.parse(argstr, 0):
+            self.ctrl.machine_wake('all')
 
     def do_status(self, argstr):
-        args = argstr.split()
-        if len(args) > 0:
-            print('The command should not have any arguments.')
-        else:
+        if self.parse(argstr, 0):
             self.ctrl.status_display()
 
+    def do_statuspos(self, argstr):
+        if self.parse(argstr, 1):
+            try:
+                self.ctrl.status_display(int(self.args[0]))
+            except:
+                print("The argument should be numeric.")
+
     def do_assign(self, argstr):
-        args = argstr.split()
-        if len(args) < 2:
-            print('This command should have at least 2 arguments.')
-        elif len(args) > 2:
-            print('Too many arguments.')
-        elif not (args[0].isnumeric() and args[1].isnumeric()):
-            print('The arguments should be numeric.')
-        else:
-            self.ctrl.machine_assign(args[0], args[1])
+        if self.parse(argstr, 2):
+            try:
+                self.ctrl.machine_assign(int(self.args[0]), int(self.args[1]))
+            except:
+                print("All arguments should be numeric.")
 
-    def do_set(self, argstr):
-        args = argstr.split()
-        if len(args) < 1:
-            print('This command should have at least 1 argument.')
-        elif len(args) > 1:
-            print('Too many arguments.')
-        else:
-            self.ctrl.machine_set(args[0])
+    def do_unlink(self, argstr):
+        if self.parse(argstr, 1):
+            try:
+                self.ctrl.machine_unlink(int(self.args[0]))
+            except:
+                print("The argument should be numeric.")
 
-    def do_setrule(self, argstr):
-        args = argstr.split()
-        if len(args) == 0:
-            print('This command should have 1 arguments.')
-        elif len(args) > 1:
-            print('Too many arguments.')
-        else:
-            self.ctrl.status.setrule(args[0])
-
-    def do_newcontest(self, argstr):
-        args = argstr.split()
-        if len(args) > 0:
-            print('Too many arguments.')
-        else:
-            self.ctrl.status_clear()
+    def do_setwave(self, argstr):
+        if self.parse(argstr, 1):
+            try:
+                self.ctrl.machine_set(self.args[0])
+            except:
+                print("The argument should be numeric.")
 
     def do_nextwave(self, argstr):
-        self.ctrl.status_nextwave()
+        if self.parse(argstr, 0):
+            self.ctrl.status_nextwave()
+
+    def do_changestage(self, argstr):
+        if self.parse(argstr, 0):
+            self.ctrl.status_nextstage()
+
+    def do_positionadd(self, argstr):
+        if self.parse(argstr, 2):
+            try:
+                self.ctrl.status_change_group_position_number(self.args[0], int(self.args[1]))
+            except:
+                print("Argument 1 should be groupname. Argument 2 should be numeric.")
+
+    def do_positionsub(self, argstr):
+        if self.parse(argstr, 2):
+            try:
+                self.ctrl.status_change_group_position_number(self.args[0], -int(self.args[1]))
+            except:
+                print("Argument 1 should be groupname. Argument 2 should be numeric.")
 
 def main():
     c = ScoringConsole()
