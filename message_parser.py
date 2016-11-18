@@ -19,9 +19,9 @@ def wave(raw):
         print(raw)
     data = {
         'type'      : 'wave',
-        'position'  : raw[0],
-        'machine'   : raw[1],
-        'wave'      : raw[2],
+        'machine'   : int(raw[0]),
+        'position'  : int(raw[1]),
+        'wave'      : int(raw[2]),
         'player'    : raw[3],
         'score'     : raw[4].split(','),
     }
@@ -38,8 +38,11 @@ def wave(raw):
 def short(raw):
     data = {}
     sender = raw[0].split('t')
-    data['machine'] = sender[0]
-    data['position'] = sender[1]
+    data['machine'] = int(sender[0])
+    if len(sender) > 1:
+        data['position'] = int(sender[1])
+    else:
+        data['position'] = 0
     if raw[1] == "ready":
         data['type'] = 'ready'
     else:

@@ -9,13 +9,14 @@ from dbaccess import DBAccess
 from position import Position
 from enum import Enum
 import rule
+import message_manager
 
 class Status:
     def __init__(self, position_size, player_list, rulename):
         config = configuration.Config('status')
         self.stage = config.get('Contest', 'stage')
         self.substage = config.get('Contest', 'substage')
-        self.current_wave = config.get('Contest', 'wave')
+        self.current_wave = config.getint('Contest', 'wave')
         self.position_size = position_size
         self.player_list = player_list
         self.rulename = rulename
@@ -24,16 +25,22 @@ class Status:
         self.positions = []
         self.machines = []
         self.build_position_list()
+        self.message = message_manager.MessageManager()
 
     def __str__(self):
-        print('Stage: {}-{}'.format(self.rule.stage, self.rule.substage))
-        print('Wave: {}-{}'.format(self.current_wave, self.rule.waves))
+        output = "Stage: {}-{}".format(self.stage, self.substage) + "\n"
+        output += "Wave: {}-{}".format(self.current_wave, self.rule.total_waves) + "\n"
         linecnt = 0
         for p in self.positions:
+            if not p:
+                continue
             if linecnt >= 3:
-                print(p.line_status())
+                output += p.line_status() + "\n"
                 linecnt = 0
-            print(p,line_status(), end=" ")
+            output += p.line_status() + " "
+            linecnt += 1
+        output += "\n" + str(self.message)
+        return output
 
     #=====#
     # Set #
@@ -65,13 +72,13 @@ class Status:
         except:
             self.positions[position].machine = machine
             self.machines[position] = machine
-            self.config.set('Preset', str(position), str(machine))
+            self.positions[position].change_state('Ready')
 
     def set_position_wait(self, position):
         self.positions[position].wait_for_response()
         self.message += 'Wait for position {} to respond.\n'.format(position)
  
-    def set_position_Receiving(self, position):
+    def set_position_receiving(self, position):
         self.positions[position].change_state('Receiving')
 
     def set_position_ok(self, position):
@@ -85,10 +92,10 @@ class Status:
     #=========#
     # Methods #
     #=========#
-    def build_position_list(self, player_list):
+    def build_position_list(self):
         self.positions = [None]
         self.machines = [None] + [0] * self.position_size
-        for i in range(1, self.num_pos+1):
+        for i in range(1, self.position_size+1):
             self.positions.append(Position(i, 0))
             self.machines.append(0)
         for p in self.player_list:
@@ -100,15 +107,16 @@ class Status:
 
     def save_wave(self, message):
         pos = self.positions[message['position']]
-        pos.save_wave(message['tag'], message['score'])
+        pos.save_wave(message['player'], message['score'])
         if pos.all_back(self.current_wave):
             pos.calculate_score(self.rule)
             self.send_check(int(pos.machine))
 
     def clear(self):
-        self.wave = 0
+        self.current_wave = 0
         for pos in self.positions:
-            pos.clear_player_data()
+            if pos:
+                pos.clear_player_data()
         self.build_position_list()
         self.save_config()
 
@@ -116,9 +124,9 @@ class Status:
         if self.current_wave < self.rule.total_waves + 1:
             self.current_wave += 1
         else:
-            printf("Already have been in last wave.")
-            printf("Call 'changestage' to start next stage,")
-            printf("or 'clear' to restart the stage.")
+            print("Already have been in last wave.")
+            print("Call 'changestage' to start next stage,")
+            print("or 'clear' to restart the stage.")
         self.save_config()
 
     def position_is_ready(self, position):
@@ -128,12 +136,13 @@ class Status:
         config = configuration.Config('status')
         config.set('Contest', 'stage', self.stage)
         config.set('Contest', 'substage', self.substage)
-        config.set('Contest', 'wave', self.current_wave)
+        config.set('Contest', 'wave', str(self.current_wave))
         with open('status.cfg', 'w') as configfile:
             config.write(configfile)
 
     def unlink(self, position):
         self.positions[position].machine = 0
+        self.positions[position].change_state('Empty')
         self.machines[position] = 0
 
     def need_to_be_set(self, position):

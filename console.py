@@ -17,16 +17,16 @@ class ScoringConsole(cmd.Cmd):
 
     def parse(self, line, arg_num):
         self.args = line.split()
-        if len(args) < arg_num:
-            print('Need at least {} arguments.'.format(arg_num[0]))
-        elif len(args) > arg_num:
-            print('Too many argument! At most {} arguments.'.format(arg_num[1]))
-        else
+        if len(self.args) < arg_num:
+            print('Need at least {} arguments.'.format(arg_num))
+        elif len(self.args) > arg_num:
+            print('Too many argument! At most {} arguments.'.format(arg_num))
+        else:
             return True
         return False
 
     def do_exit(self, argstr):
-        if self.parse(argstr, 0)
+        if self.parse(argstr, 0):
             self.ctrl.destroy()
             sys.exit(1)
 
@@ -34,7 +34,7 @@ class ScoringConsole(cmd.Cmd):
         if self.parse(argstr, 1):
             try:
                 self.ctrl.machine_reset(int(self.args[0]))
-            except:
+            except ValueError:
                 print("The argument should be numeric.")
     
     def do_resetall(self, argstr):
@@ -45,7 +45,7 @@ class ScoringConsole(cmd.Cmd):
         if self.parse(argstr, 1):
             try:
                 self.ctrl.machine_hello(int(self.args[0]))
-            except:
+            except ValueError:
                 print("The argument should be numeric.")
 
     def do_helloall(self, argstr):
@@ -56,7 +56,7 @@ class ScoringConsole(cmd.Cmd):
         if self.parse(argstr, 1):
             try:
                 self.ctrl.machine_force(int(self.args[0]))
-            except:
+            except ValueError:
                 print("The argument should be numeric.")
 
     def do_forceall(self, argstr):
@@ -67,7 +67,7 @@ class ScoringConsole(cmd.Cmd):
         if self.parse(argstr, 1):
             try:
                 self.ctrl.machine_sleep(int(self.args[0]))
-            except:
+            except ValueError:
                 print("The argument should be numeric.")
 
     def do_sleepall(self, argstr):
@@ -78,7 +78,7 @@ class ScoringConsole(cmd.Cmd):
         if self.parse(argstr, 1):
             try:
                 self.ctrl.machine_wake(int(self.args[0]))
-            except:
+            except ValueError:
                 print("The argument should be numeric.")
 
     def do_wakeall(self, argstr):
@@ -93,28 +93,28 @@ class ScoringConsole(cmd.Cmd):
         if self.parse(argstr, 1):
             try:
                 self.ctrl.status_display(int(self.args[0]))
-            except:
+            except ValueError:
                 print("The argument should be numeric.")
 
     def do_assign(self, argstr):
         if self.parse(argstr, 2):
             try:
                 self.ctrl.machine_assign(int(self.args[0]), int(self.args[1]))
-            except:
+            except ValueError:
                 print("All arguments should be numeric.")
 
     def do_unlink(self, argstr):
         if self.parse(argstr, 1):
             try:
                 self.ctrl.machine_unlink(int(self.args[0]))
-            except:
+            except ValueError:
                 print("The argument should be numeric.")
 
     def do_setwave(self, argstr):
         if self.parse(argstr, 1):
             try:
                 self.ctrl.machine_set(self.args[0])
-            except:
+            except ValueError:
                 print("The argument should be numeric.")
 
     def do_nextwave(self, argstr):
@@ -125,19 +125,19 @@ class ScoringConsole(cmd.Cmd):
         if self.parse(argstr, 0):
             self.ctrl.status_nextstage()
 
-    def do_positionadd(self, argstr):
+    def do_positionchange(self, argstr):
         if self.parse(argstr, 2):
             try:
                 self.ctrl.status_change_group_position_number(self.args[0], int(self.args[1]))
-            except:
+            except ValueError:
                 print("Argument 1 should be groupname. Argument 2 should be numeric.")
 
-    def do_positionsub(self, argstr):
+    def do_conflictsolve(self, argstr):
         if self.parse(argstr, 2):
             try:
-                self.ctrl.status_change_group_position_number(self.args[0], -int(self.args[1]))
-            except:
-                print("Argument 1 should be groupname. Argument 2 should be numeric.")
+                self.ctrl.status_conflict_solve(self.args[0], int(self.args[1]))
+            except ValueError:
+                print("Argument 1 should be tag. Argument 2 should be numeric.")
 
 def main():
     c = ScoringConsole()

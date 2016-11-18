@@ -25,7 +25,7 @@ class DBAccess:
         signature = DBAccess.generate_signature(command)
         message = {'command': command, 'signature': signature}
         response = requests.post(DBAccess.config['url'], data=message)
-        print(response.text)
+        #print(response.text)
         return json.loads(response.text)
 
 def main():

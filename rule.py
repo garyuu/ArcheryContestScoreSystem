@@ -21,16 +21,16 @@ class Rule:
         self.goal_point = 0
         self.load_stage_rule(stage, rulename)
 
-    def load_stage_rule(self, stage, rulename)
+    def load_stage_rule(self, stage, rulename):
         config = SectionConfig("rules/"+rulename, stage)
-        self.machine_mode = config['modeid']
+        self.machine_mode = int(config['modeid'])
         self.game_mode = config['mode']
         self.reference = config['reference']
-        self.team_size = config['team']
-        self.total_waves = config['waves']
-        self.shots_per_wave = config['shots']
-        self.win_point = config['win']
-        self.lose_point = config['lose']
-        self.draw_point = config['draw']
-        self.goal_point = config['goal']
+        self.team_size = int(config['team'])
+        self.total_waves = int(config['waves'])
+        self.shots_per_wave = int(config['shots'])
+        self.win_point = int(config['win'])
+        self.lose_point = int(config['lose'])
+        self.draw_point = int(config['draw'])
+        self.goal_point = int(config['goal'])
 

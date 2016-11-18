@@ -26,16 +26,17 @@ class Position():
         self.dead = False
 
     def __str__(self):
-        print(self.line_status())
+        output = self.line_status() + "\n"
         for p in self.players:
-            print(p)
+            output += str(p) + "\n"
+        return output
 
     def line_status(self):
         dead = 'X' if self.dead else ' '
-        return "{}:M{2}:[{}], {}".format(self.id, self.machine, dead, self.state.name)
+        return "{}:M{}:[{}], {}".format(self.id, self.machine, dead, self.state.name)
 
     def player_number(self):
-        return self.player_list
+        return len(self.players)
 
     def change_state(self, state):
         self.state = StateEnum[state]
@@ -44,10 +45,9 @@ class Position():
         for p in self.players:
             if p.tag == tag:
                 p.add_wave_from_list(shots)
+                p.latest_wave_sum()
 
     def calculate_score(self, rule):
-        for p in self.players:
-            p.latest_wave_sum()
         if rule.game_mode == 'D':
             #  Assume that each dual match has only 2 players/teams.
             if self.players[0].score_list[-1] > self.players[1].score_list[-1]:
@@ -63,8 +63,11 @@ class Position():
                 self.players[0].winner = True
             if self.players[1].total_score() == rule.goal_point:
                 self.players[1].winner = True
-        self.players[0].latest_wave_save()
-        self.players[1].latest_wave_save()
+            self.players[0].latest_wave_save()
+            self.players[1].latest_wave_save()
+        else:
+            for p in self.players:
+                p.latest_wave_save()
 
     def wait_for_response(self,sec = 10.0):
         self.waiting = True
@@ -81,7 +84,7 @@ class Position():
     
     def all_back(self, wave):
         for p in self.players:
-            if p.wave_count != wave:
+            if p.wave_count() != wave:
                 return False
         return True
 
