@@ -11,14 +11,15 @@ import dbaccess
 import random
 
 class MatchMaker:
-    def make(self, player_list, bound, q_to_d=False):
+    def make(player_list, bound, q_to_d=False):
         if q_to_d:
-            result = self.group_make_qtod(player_list, bound)
+            result = MatchMaker.make_qtod(player_list, bound)
         else:
-            result = self.group_make_dtod(player_list, bound)
+            result = MatchMaker.make_dtod(player_list, bound)
+        print(result)
         return result
 
-    def make_qtod(self, player_list, bound):
+    def make_qtod(player_list, bound):
         player_list.sort(key=MatchMaker.cmp_to_key(MatchMaker.cmp))
 
         promote_num = len(player_list) #get total # of players
@@ -31,10 +32,9 @@ class MatchMaker:
         while pos_num & (-pos_num) != pos_num: #if pos is not 2**k, turn into 2**k
             pos_num -= pos_num & (-pos_num)
         
-        i = 0
         result = []
-        while i * 2 <= promote_num:
-            player_sublist = player_list[i:i+pos_num*2]
+        if promote_num <= pos_num:
+            player_sublist = player_list[0:promote_num]
 
             for idx in range(0,pos_num//2):
                 player_sublist[idx*2].position = pos_num//2 + (bound[0] - 1) - idx
@@ -43,21 +43,33 @@ class MatchMaker:
                 player_sublist[idx*2 + 1].position = pos_num//2 + (bound[0] - 1) + idx + 1
                 player_sublist[-idx*2 - 2].position = pos_num//2 + (bound[0] - 1) + idx + 1
                 # 2 vs 15 at 5
-            
-            for idx in range(0,pos_num*2):
-                if i > 0:
-                    result.append((player_sublist[idx].tag,player_sublist[idx].position, True))
-                else:
-                    result.append((player_sublist[idx].tag,player_sublist[idx].position))
 
-            i += pos_num*2
+            result.append((player_sublist[idx].tag,player_sublist[idx].position))
+        else:
+            player_sublist = [player_list[0:pos_num//2-1] + player_list[pos_num*3//2+1:promote_num],
+                              player_list[pos_num//2:pos_num*3//2]]
+            for i in range(2): 
+                for idx in range(0,pos_num//2):
+                    player_sublist[i][idx*2].position = pos_num//2 + (bound[0] - 1) - idx
+                    player_sublist[i][-idx*2-1].position = pos_num//2 + (bound[0] - 1) - idx
+                    # 1 vs 16 at 4
+                    player_sublist[i][idx*2 + 1].position = pos_num//2 + (bound[0] - 1) + idx + 1
+                    player_sublist[i][-idx*2 - 2].position = pos_num//2 + (bound[0] - 1) + idx + 1
+                    # 2 vs 15 at 5
+                
+                if i > 0:
+                    for idx in range(0,pos_num*2):
+                        result.append((player_sublist[idx].tag,player_sublist[idx].position, True))
+                else:
+                    for idx in range(0,pos_num*2):
+                        result.append((player_sublist[idx].tag,player_sublist[idx].position))
 
         return result
 
-    def make_dtod(self, player_list, bound):
+    def make_dtod(player_list, bound):
         player_num = len(player_list)
-        current_rank_of_position = self.position_of_rank_generator(player_num, bound, True)
-        new_position_of_rank = self.position_of_rank_generator(player_num/2, bound)
+        current_rank_of_position = MatchMaker.position_of_rank_generator(player_num, bound, True)
+        new_position_of_rank = MatchMaker.position_of_rank_generator(player_num/2, bound)
         result = []
         for p in player_list:
             if p.winner:
@@ -65,11 +77,11 @@ class MatchMaker:
                 result.append((p.tag, new_pos))
         return result
 
-    def send_stage_positions(self, result, stage, team):
+    def send_stage_positions(result, stage, team):
         db_msg = {
-            'action' = 'savestageposition',
-            'table' = [],
-            'team' = team,
+            'action': 'savestageposition',
+            'table': [],
+            'team': team,
         }
         for row in result:
             data = {
@@ -78,18 +90,18 @@ class MatchMaker:
                 'position': row[1],
             }
             if len(row) > 2:
-                data['filter'] = stage +  str(row[2]))
+                data['filter'] = stage + str(row[2])
             else:
                 data['filter'] = None
             db_msg['table'].append(data)
-        DBAccess.request(db_msg)
+        dbaccess.DBAccess.request(db_msg)
 
     def position_of_rank_generator(size, bound, reverse=False, rec=False):
         if rec:
-            if size == 1:
+            if size <= 1:
                 return [[1,2]]
-            else
-                table = self.position_of_rank_generator(size/2, None, False, True)
+            else:
+                table = MatchMaker.position_of_rank_generator(size//2, None, False, True)
                 result = []
                 for x in table:
                     for y in x:
@@ -97,26 +109,26 @@ class MatchMaker:
                 return result
         else:
             one_by_one = 4  # Set below(include) how many size assign one position for one player
-            table = self.position_of_rank_generator(size, None, False, True)
+            table = MatchMaker.position_of_rank_generator(size, None, False, True)
             pos_num = bound[1] - bound[0] + 1
             while pos_num & (-pos_num) != pos_num:
                 pos_num -= pos_num & (-pos_num)
             result = {}
             if size > one_by_one:
                 if size == 1:
-                    start = (pos_num - 2) / 2 + bound[0]
+                    start = (pos_num - 2) // 2 + bound[0]
                     table.append([3,4])
                 else:
-                    start = (pos_num - size) / 2 + bound[0]
+                    start = (pos_num - size) // 2 + bound[0]
                 for x in range(0, len(table)):
                     for y in table[x]:
                         result[y] = x + start
             else:
                 if size == 1:
-                    start = (pos_num - 4) / 2 + bound[0]
+                    start = (pos_num - 4) // 2 + bound[0]
                     table.append([3,4])
                 else:
-                    start = (pos_num - size * 2) / 2 + bound[0]
+                    start = (pos_num - size * 2) // 2 + bound[0]
                 i = start
                 for x in table:
                     for y in x:
@@ -156,6 +168,8 @@ class MatchMaker:
                 return (a_ten + a_elev) - (b_ten + b_elev)
             elif a_elev != b_elev:
                 return a_elev - b_elev
+            elif a.winner != b.winner
+                return a.winner - b.winner
             else:
                 return random.choice((1,-1))
 
