@@ -34,11 +34,12 @@ class Status:
         for p in self.positions:
             if not p:
                 continue
-            if linecnt >= 3:
-                output += p.line_status() + "\n"
+            if linecnt >= 2:
+                output += format(p.line_status(), '<25') + "\n"
                 linecnt = 0
-            output += p.line_status() + " "
-            linecnt += 1
+            else:
+                output += format(p.line_status(), '<25') + " "
+                linecnt += 1
         output += "\n" + str(self.message)
         return output
 

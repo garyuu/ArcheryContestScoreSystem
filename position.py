@@ -33,7 +33,7 @@ class Position():
 
     def line_status(self):
         dead = 'X' if self.dead else ' '
-        return "{}:M{}:[{}], {}".format(self.id, self.machine, dead, self.state.name)
+        return "{:>2}:M{}:[{}], {}".format(self.id, self.machine, dead, self.state.name)
 
     def player_number(self):
         return len(self.players)

@@ -279,7 +279,7 @@ class Controller:
         self.player_list = []
         for p in player_data:
             self.player_list_tag_index.append(p['tag'])
-            self.player_list.append(player.Player(int(p['id']), p['tag'], int(p['position']), p['stage'], p['groupname']))
+            self.player_list.append(player.Player(int(p['id']), p['tag'], int(p['position']), p['stage'], p['groupname'], p['rank']))
     
     def load_waves(self, stage):
         db_msg = {'action': 'allwavelist',
@@ -342,7 +342,14 @@ class Controller:
                 self.load_team_base_score(current_rule.reference)
             for g in self.group_dict:
                 group = self.group_dict[g]
-                result = MatchMaker.make(group['players'], group['bound'], True)
+                if len(group['players']) == 0:
+                    continue
+                pos_size = group['bound'][1] - group['bound'][0] + 1
+                pmt_size = len(group['players'])
+                while pmt_size & -pmt_size != pmt_size:
+                    pmt_size -=  pmt_size & -pmt_size
+                split = pos_size * 2 < pmt_size
+                result = MatchMaker.make(group['players'], g, True, split)
                 if len(result) > self.substage:
                     self.substage = len(result)
                 MatchMaker.send_stage_positions(result, self.current_stage, current_rule.team_size > 1)
@@ -352,13 +359,9 @@ class Controller:
         for g in self.group_dict:
             group = self.group_dict[g]
             if len(group['players']) == int(self.substage):
-                result = MatchMaker.make(group['players'], group['bound'])
+                result = MatchMaker.make(group['players'], g)
                 MatchMaker.send_stage_positions(result, self.current_stage, self.status.rule.team_size)
             else:
-                if int(self.substage) > len(gourp['players']) * 2:
-                    split = -1
-                else:
-                    split = 1
-                result = MatchMaker.make(group['players'], group['bound'], False, split)
+                result = MatchMaker.make(group['players'], g, False, True)
                 MatchMaker.send_stage_positions(result, self.current_stage, self.status.rule.team_size, True)
         self.substage = str(int(self.substage) // 2)

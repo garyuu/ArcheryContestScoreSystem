@@ -6,12 +6,13 @@ Descr.: To store a player's data.
 '''
 from dbaccess import DBAccess
 class Player:
-    def __init__(self, id, tag, position, stage, group):
+    def __init__(self, id, tag, position, stage, group, rank):
         self.id = id
         self.tag = tag
         self.position = position
         self.stage = stage
         self.group = group
+        self.rank = rank
         self.wave_list = []
         self.score_list = []
         self.winner = False
