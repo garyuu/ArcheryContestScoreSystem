@@ -279,7 +279,7 @@ class Controller:
         self.player_list = []
         for p in player_data:
             self.player_list_tag_index.append(p['tag'])
-            self.player_list.append(player.Player(int(p['id']), p['tag'], int(p['position']), stage, p['groupname']))
+            self.player_list.append(player.Player(int(p['id']), p['tag'], int(p['position']), p['stage'], p['groupname']))
     
     def load_waves(self, stage):
         db_msg = {'action': 'allwavelist',
@@ -342,14 +342,23 @@ class Controller:
                 self.load_team_base_score(current_rule.reference)
             for g in self.group_dict:
                 group = self.group_dict[g]
-                result = MatchMaker.make(group['players'], group['bound'], current_rule.team_size > 1)
+                result = MatchMaker.make(group['players'], group['bound'], True)
                 if len(result) > self.substage:
                     self.substage = len(result)
                 MatchMaker.send_stage_positions(result, self.current_stage, current_rule.team_size > 1)
             self.substage = str(self.substage)
 
     def nextstage_promotion(self):
-        for group in self.group_dict:
-            result = MatchMaker.make(group['players'], group['bound'])
-            MatchMaker.send_stage_positions(result, self.current_stage, self.status.rule.team_size)
+        for g in self.group_dict:
+            group = self.group_dict[g]
+            if len(group['players']) == int(self.substage):
+                result = MatchMaker.make(group['players'], group['bound'])
+                MatchMaker.send_stage_positions(result, self.current_stage, self.status.rule.team_size)
+            else:
+                if int(self.substage) > len(gourp['players']) * 2:
+                    split = -1
+                else:
+                    split = 1
+                result = MatchMaker.make(group['players'], group['bound'], False, split)
+                MatchMaker.send_stage_positions(result, self.current_stage, self.status.rule.team_size, True)
         self.substage = str(int(self.substage) // 2)
