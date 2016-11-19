@@ -15,8 +15,7 @@ Descr.: To parse a message from mqtt server.
 import re
 
 def wave(raw):
-    if __name__ == "__main__":
-        print(raw)
+    print(raw)
     data = {
         'type'      : 'wave',
         'machine'   : int(raw[0]),

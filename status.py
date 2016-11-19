@@ -12,19 +12,18 @@ import rule
 import message_manager
 
 class Status:
-    def __init__(self, position_size, player_list, rulename):
+    def __init__(self, position_size, rulename):
         config = configuration.Config('status')
         self.stage = config.get('Contest', 'stage')
         self.substage = config.get('Contest', 'substage')
         self.current_wave = config.getint('Contest', 'wave')
         self.position_size = position_size
-        self.player_list = player_list
+        self.player_list = []
         self.rulename = rulename
         self.rule = rule.Rule(self.stage, self.rulename)
         self.check = None
         self.positions = []
         self.machines = []
-        self.build_position_list()
         self.message = message_manager.MessageManager()
 
     def __str__(self):

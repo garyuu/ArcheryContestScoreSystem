@@ -64,15 +64,18 @@ class ScoringConsole(cmd.Cmd):
             self.ctrl.machine_force('all')
 
     def do_sleep(self, argstr):
-        if self.parse(argstr, 1):
+        if self.parse(argstr, 2):
             try:
-                self.ctrl.machine_sleep(int(self.args[0]))
+                self.ctrl.machine_sleep(int(self.args[0]), int(self.args[1]))
             except ValueError:
                 print("The argument should be numeric.")
 
     def do_sleepall(self, argstr):
-        if self.parse(argstr, 0):
-            self.ctrl.machine_sleep('all')
+        if self.parse(argstr, 1):
+            try:
+                self.ctrl.machine_sleep('all', int(self.args[0]))
+            except ValueError:
+                print("The argument should be numeric.")
 
     def do_wake(self, argstr):
         if self.parse(argstr, 1):
@@ -113,7 +116,7 @@ class ScoringConsole(cmd.Cmd):
     def do_setwave(self, argstr):
         if self.parse(argstr, 1):
             try:
-                self.ctrl.machine_set(self.args[0])
+                self.ctrl.machine_set(int(self.args[0]))
             except ValueError:
                 print("The argument should be numeric.")
 
@@ -138,6 +141,11 @@ class ScoringConsole(cmd.Cmd):
                 self.ctrl.status_conflict_solve(self.args[0], int(self.args[1]))
             except ValueError:
                 print("Argument 1 should be tag. Argument 2 should be numeric.")
+
+    def do_reloadplayerdata(self, argstr):
+        if self.parse(argstr, 0):
+            self.ctrl.load_player_list()
+            self.ctrl.load_waves()
 
 def main():
     c = ScoringConsole()

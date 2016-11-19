@@ -14,6 +14,8 @@ def score_sequence(scorelist):
 def gen(msg):
     if not msg['mode'].isnumeric():
         message = "{}i{}".format(msg['target'], msg['mode'])
+        if msg['mode'] == 's':
+            message += " {}".format(msg['time'])
     elif msg['mode'] == '1': # Qualifying
         message = "{}i{}{}s{}t{}{}".format(
             msg['target'],

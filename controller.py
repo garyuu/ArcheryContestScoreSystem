@@ -30,21 +30,24 @@ class Controller:
         self.mqtt = MQTTClient(m_conf)
         self.mqtt.on_message = self.mqtt_on_message
         self.mqtt.connect()
-
-        print("Preparing player data...")
+        
+        print("Initializing status...")
+        self.status = status.Status(self.get_total_number_of_position(), self.rulename)
+        self.status.check = self.all_sent_back_check
+        while self.current_stage != self.status.stage:
+            self.current_stage = next(self.stage_iter)
+        self.substage = self.status.substage
+    
+        print("Reload player data...")
         self.player_list = []
         self.player_list_tag_index = []
         self.group_dict = {}
         self.load_player_list(self.current_stage + self.substage)
         self.load_waves(self.current_stage + self.substage)
         self.build_group_dict()
+        self.status.player_list = self.player_list
+        self.status.build_position_list()
 
-        print("Initializing status...")
-        self.status = status.Status(self.get_total_number_of_position(), self.player_list, self.rulename)
-        self.status.check = self.all_sent_back_check
-        while self.current_stage != self.status.stage:
-            self.current_stage = next(self.stage_iter)
-    
     def __del__(self):
         #self.destroy()
         pass
@@ -52,17 +55,18 @@ class Controller:
     #==================#
     # Controll Machine #
     #==================#
-    def machine_short_message(self, position, mode):
-        msg = {'mode': mode}
+    def machine_short_message(self, position, mode, time=0):
+        msg = {'mode': mode, 'time': time}
         if position != 'all':
             machine_list = [self.status.positions[(int(position))].machine]
         else:
             machine_list = self.status.machines
 
         for machine in machine_list:
-            msg['target'] = machine
-            self.status.set_position_wait(int(position))
-            self.mqtt.publish(generator.gen(msg))
+            if machine > 0:
+                msg['target'] = machine
+                self.status.set_position_wait(int(position))
+                self.mqtt.publish(generator.gen(msg))
 
     def machine_reset(self, position):
         if position == 'all':
@@ -85,12 +89,12 @@ class Controller:
         else:
             self.machine_short_message(position, 'f')
 
-    def machine_sleep(self, position):
+    def machine_sleep(self, position, time):
         if position == 'all':
             for i in range(1, self.get_total_number_of_position()):
-                self.machine_short_message(i, 's')
+                self.machine_short_message(i, 's', time)
         else:
-            self.machine_short_message(position, 's')
+            self.machine_short_message(position, 's', time)
 
     def machine_wake(self, position):
         if position == 'all':
@@ -116,17 +120,29 @@ class Controller:
         if not self.status.position_is_ready(int(position)):
             print("Position {} is not ready to receive set messages.".format(position))
         elif self.status.need_to_be_set(position):
-            msg = {
-                'target'        : self.status.positions[(int(position))].machine,
-                'mode'          : str(self.status.rule.machine_mode),
-                'wave'          : str(self.status.current_wave),
-                'position'      : position,
-                'num_players'   : len(self.status.positions[int(position)].players),
-                'score'         : [],
-            }
+            if self.status.rule.game_mode == 'Q':
+                msg = {
+                    'target'        : self.status.positions[(int(position))].machine,
+                    'mode'          : str(self.status.rule.machine_mode),
+                    'wave'          : str(self.status.current_wave),
+                    'position'      : position,
+                    'num_players'   : len(self.status.positions[int(position)].players),
+                    'score'         : [],
+                }
+                for player in self.status.positions[int(position)].players:
+                    msg['score'].append(player.total_score())
+            else:
+                msg = {
+                    'target'        : self.status.positions[(int(position))].machine,
+                    'mode'          : str(self.status.rule.machine_mode),
+                    'wave'          : str(self.status.current_wave),
+                    'position'      : position,
+                    'tag_a'         : self.status.positions[int(position)].players[0].tag,
+                    'point_a'       : self.status.positions[int(position)].players[0].total_score(),
+                    'tag_b'         : self.status.positions[int(position)].players[1].tag,
+                    'point_b'       : self.status.positions[int(position)].players[1].total_score(),
+                }
 
-            for player in self.status.positions[int(position)].players:
-                msg['score'].append(player.total_score())
             self.status.set_position_wait(int(position))
             self.mqtt.publish(generator.gen(msg))
             self.status.set_position_receiving(int(position))
@@ -158,7 +174,7 @@ class Controller:
 
     def status_change_group_position_number(self, group, number):
         if group in self.group_name_list:
-            self.config.set('Group', group, number)
+            self.config.set('Group', group, str(number))
             self.build_group_bound()
         else:
             print("There is no group labeled \"{}\".".format(group))

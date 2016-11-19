@@ -39,7 +39,7 @@ class MatchMaker:
         if first_round:
             for p in player_list:
                 new_pos = table[p.rank-1]
-                quart_size = round_size // 4
+                quart_size = player_num // 4
                 if split and p.rank > quart_size and p.rank <= quart_size * 3:
                     result.append((p.tag, new_pos, p.rank, True))
                 else:

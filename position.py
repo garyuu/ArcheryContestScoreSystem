@@ -33,7 +33,7 @@ class Position():
 
     def line_status(self):
         dead = 'X' if self.dead else ' '
-        return "{:>2}:M{}:[{}], {}".format(self.id, self.machine, dead, self.state.name)
+        return "{:>2}:M{}:[{}], {}-P{}".format(self.id, self.machine, dead, self.state.name, self.player_number())
 
     def player_number(self):
         return len(self.players)
@@ -49,20 +49,28 @@ class Position():
 
     def calculate_score(self, rule):
         if rule.game_mode == 'D':
-            #  Assume that each dual match has only 2 players/teams.
-            if self.players[0].score_list[-1] > self.players[1].score_list[-1]:
-                self.players[0].score_list[-1] = rule.win_point
-                self.players[1].score_list[-1] = rule.lose_point
-            elif self.players[0].score_list[-1] < self.players[1].score_list[-1]:
-                self.players[1].score_list[-1] = rule.win_point
-                self.players[0].score_list[-1] = rule.lose_point
+            if self.players[0].wave_count() <= rule.total_waves:
+                #  Assume that each dual match has only 2 players/teams.
+                if self.players[0].score_list[-1] > self.players[1].score_list[-1]:
+                    self.players[0].score_list[-1] = rule.win_point
+                    self.players[1].score_list[-1] = rule.lose_point
+                elif self.players[0].score_list[-1] < self.players[1].score_list[-1]:
+                    self.players[1].score_list[-1] = rule.win_point
+                    self.players[0].score_list[-1] = rule.lose_point
+                else:
+                    self.players[0].score_list[-1] = rule.draw_point
+                    self.players[1].score_list[-1] = rule.draw_point
+                if self.players[0].total_score() == rule.goal_point:
+                    self.players[0].winner = True
+                if self.players[1].total_score() == rule.goal_point:
+                    self.players[1].winner = True
             else:
-                self.players[0].score_list[-1] = rule.draw_point
-                self.players[1].score_list[-1] = rule.draw_point
-            if self.players[0].total_score() == rule.goal_point:
-                self.players[0].winner = True
-            if self.players[1].total_score() == rule.goal_point:
-                self.players[1].winner = True
+                if self.players[0].score_list[-1] > self.players[1].score_list[-1]:
+                    self.players[0].winner = True
+                else:
+                    self.players[1].winner = True
+                self.players[0].score_list[-1] = 0
+                self.players[1].score_list[-1] = 0
             self.players[0].latest_wave_save()
             self.players[1].latest_wave_save()
         else:
