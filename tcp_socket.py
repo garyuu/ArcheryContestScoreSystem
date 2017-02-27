@@ -7,6 +7,7 @@ Descr.: The port that communicate with other devices.
 import socket
 import sys
 import threading
+import json
 
 class SocketManager:
     def __init__(self, port, max_client):
@@ -18,8 +19,8 @@ class SocketManager:
         self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.server_socket.bind(('', port))
 
-    def send(self, socket, message):
-        socket.send(message)
+    def send(self, message):
+        self.socket_stack[message['machine']].send(json.dump(message))
 
     def start(self):
         self.server_socket.listen(self.max_client)
@@ -51,7 +52,9 @@ class SocketManager:
             try:
                 data = socket.recv(size)
                 if data:
-                    self.push_message((socket, data))
+                    message = json.loads(data)
+                    self.socket_stack[message['machine']] = socket
+                    self.push_message(message)
                 else:
                     raise error('Client disconnected')
             except:

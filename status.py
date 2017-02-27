@@ -107,10 +107,10 @@ class Status:
 
     def save_wave(self, message):
         pos = self.positions[message['position']]
-        pos.save_wave(message['player'], message['score'])
-        if pos.all_back(self.current_wave):
-            pos.calculate_score(self.rule)
-            self.send_check(int(pos.machine))
+        for i in range(message['num_players']):
+            pos.save_wave(message['players'][i], message['scores'][i])
+        pos.calculate_score(self.rule)
+        self.send_check(int(pos.machine))
 
     def clear(self):
         self.current_wave = 0
