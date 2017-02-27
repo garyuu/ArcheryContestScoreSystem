@@ -5,7 +5,7 @@ Name:   controller
 Descr.: The core of the program. It's a bridge to most components.
 '''
 import configuration
-from mqtt_client import MQTTClient
+from tcp_socket import SocketManager
 import message_parser as parser
 import message_generator as generator
 import status
@@ -25,11 +25,10 @@ class Controller:
         self.current_stage = next(self.stage_iter)
         self.substage = ''
 
-        print("Initializing MQTT client...")
-        m_conf = configuration.SectionConfig('settings', 'MQTT')
-        self.mqtt = MQTTClient(m_conf)
-        self.mqtt.on_message = self.mqtt_on_message
-        self.mqtt.connect()
+        print("Initializing TCP server...")
+        self.socket_manager = SocketManager(20000, 40)
+        threading.Thread(target = self.message_reader).start()
+        self.socket_manager.start()
         
         print("Initializing status...")
         self.status = status.Status(self.get_total_number_of_position(), self.rulename)
@@ -66,7 +65,7 @@ class Controller:
             if machine > 0:
                 msg['target'] = machine
                 self.status.set_position_wait(int(position))
-                self.mqtt.publish(generator.gen(msg))
+                self.socket_manager.send(generator.gen(msg))
 
     def machine_reset(self, position):
         if position == 'all':
@@ -144,7 +143,7 @@ class Controller:
                 }
 
             self.status.set_position_wait(int(position))
-            self.mqtt.publish(generator.gen(msg))
+            self.socket_manager.send(generator.gen(msg))
             self.status.set_position_receiving(int(position))
     
     #=================#
@@ -259,28 +258,34 @@ class Controller:
         return conflict_flag
 
     def destroy(self):
-        self.mqtt.disconnect()
+        pass
 
-    def mqtt_on_message(self, client, userdata, message):
-        self.message_process(parser.parse(message.payload))
+    def message_reader(self):
+        while True:
+            data = self.socket_manager.pop_message()
+            if data:
+                self.message_process(data[0], parser.parse(data[1]))
 
-    def message_process(self, message):
+    def message_process(self, socket, message):
         print(message)
         if message['position']:
             pos = message['position']
         else:
             pos = self.status.machines.index(message['machine'])
+        resp = False
         if message['type'] == 'ok':
             self.status.set_position_ok(pos)
         elif message['type'] == 'ready':
             self.status.set_position_ready(pos)
-            self.machine_assign(int(message['machine']), pos)
+            resp = self.machine_assign(int(message['machine']), pos)
         elif message['type'] == 'wave':
-            self.status.save_wave(message)
+            resp = self.status.save_wave(message)
+        if resp:
+            self.socket_manager.send(socket, resp)
 
     def all_sent_back_check(self, machine):
         msg = {'mode': 'g', 'target': str(machine)}
-        self.mqtt.publish(generator.gen(msg))
+        return msg
 
     def load_config(self):
         self.rulename = self.config.get('Contest', 'rulename')
