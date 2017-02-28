@@ -17,10 +17,10 @@ class SocketManager:
         self.max_client = max_client
         # Create socket
         self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.server_socket.bind(('', port))
+        self.server_socket.bind(('192.168.1.128', port))
 
     def send(self, message):
-        self.socket_stack[message['machine']].send(json.dump(message))
+        self.socket_stack[int(message['machine'])].send(json.dumps(message).encode("UTF-8"))
 
     def start(self):
         self.server_socket.listen(self.max_client)
@@ -29,6 +29,7 @@ class SocketManager:
     def main_tread(self):
         while True:
             (client_socket, address) = self.server_socket.accept()
+            print("Client connected from {}.".format(address))
             threading.Thread(target = self.socket_thread_function, args = (client_socket,)).start()
 
     def push_message(self, message):
@@ -51,8 +52,10 @@ class SocketManager:
         while True:
             try:
                 data = socket.recv(size)
+                print(data)
                 if data:
-                    message = json.loads(data)
+                    message = json.loads(data.decode("UTF-8"))
+                    print(message)
                     self.socket_stack[message['machine']] = socket
                     self.push_message(message)
                 else:

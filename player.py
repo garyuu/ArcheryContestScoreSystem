@@ -36,10 +36,10 @@ class Player:
     def latest_wave_sum(self):
         total = 0
         for i in self.wave_list[-1]:
-            if i == 11:
+            if i == 'X':
                 total += 10
-            elif i > 0 and i <= 10:
-                total += i
+            elif i != 'm':
+                total += int(i)
         self.score_list.append(total)
 
     def latest_wave_save(self):

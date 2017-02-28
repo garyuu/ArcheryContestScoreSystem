@@ -6,8 +6,6 @@ Descr.: The core of the program. It's a bridge to most components.
 '''
 import configuration
 from tcp_socket import SocketManager
-import message_parser as parser
-import message_generator as generator
 import status
 import player
 import rule
@@ -245,7 +243,7 @@ class Controller:
 
     def message_process(self, message):
         print(message)
-        if message['position']:
+        if 'position' in message:
             pos = message['position']
         else:
             pos = self.status.machines.index(message['machine'])
@@ -254,6 +252,8 @@ class Controller:
         elif message['command'] == 'initialize':
             self.status.set_position_ready(pos)
             self.machine_assign(int(message['machine']), pos)
+            resp = {'machine': int(message['machine']), 'command': 'response', 'status': True}
+            self.socket_manager.send(resp)
         elif message['command'] == 'sendwave':
             self.status.save_wave(message)
 
