@@ -5,9 +5,7 @@ Name:   controller
 Descr.: The core of the program. It's a bridge to most components.
 '''
 import configuration
-from mqtt_client import MQTTClient
-import message_parser as parser
-import message_generator as generator
+from tcp_socket import SocketManager
 import status
 import player
 import rule
@@ -25,11 +23,10 @@ class Controller:
         self.current_stage = next(self.stage_iter)
         self.substage = ''
 
-        print("Initializing MQTT client...")
-        m_conf = configuration.SectionConfig('settings', 'MQTT')
-        self.mqtt = MQTTClient(m_conf)
-        self.mqtt.on_message = self.mqtt_on_message
-        self.mqtt.connect()
+        print("Initializing TCP server...")
+        self.socket_manager = SocketManager(20000, 40)
+        threading.Thread(target = self.message_reader).start()
+        self.socket_manager.start()
         
         print("Initializing status...")
         self.status = status.Status(self.get_total_number_of_position(), self.rulename)
@@ -55,8 +52,8 @@ class Controller:
     #==================#
     # Controll Machine #
     #==================#
-    def machine_short_message(self, position, mode, time=0):
-        msg = {'mode': mode, 'time': time}
+    def machine_short_message(self, position, command):
+        msg = {'command': command}
         if position != 'all':
             machine_list = [self.status.positions[(int(position))].machine]
         else:
@@ -64,44 +61,30 @@ class Controller:
 
         for machine in machine_list:
             if machine > 0:
-                msg['target'] = machine
+                msg['machine'] = machine
                 self.status.set_position_wait(int(position))
-                self.mqtt.publish(generator.gen(msg))
+                self.socket_manager.send(msg)
 
     def machine_reset(self, position):
         if position == 'all':
             for i in range(1, self.get_total_number_of_position()):
-                self.machine_short_message(i, 'r')
+                self.machine_short_message(i, 'reset')
         else:
-            self.machine_short_message(position, 'r')
-
-    def machine_hello(self, position):
-        if position == 'all':
-            for i in range(1, self.get_total_number_of_position()):
-                self.machine_short_message(i, 'h')
-        else:
-            self.machine_short_message(position, 'h')
+            self.machine_short_message(position, 'reset')
 
     def machine_force(self, position):
         if position == 'all':
             for i in range(1, self.get_total_number_of_position()):
-                self.machine_short_message(i, 'f')
+                self.machine_short_message(i, 'force')
         else:
-            self.machine_short_message(position, 'f')
+            self.machine_short_message(position, 'force')
 
-    def machine_sleep(self, position, time):
+    def machine_sleep(self, position):
         if position == 'all':
             for i in range(1, self.get_total_number_of_position()):
-                self.machine_short_message(i, 's', time)
+                self.machine_short_message(i, 'sleep')
         else:
-            self.machine_short_message(position, 's', time)
-
-    def machine_wake(self, position):
-        if position == 'all':
-            for i in range(1, self.get_total_number_of_position()):
-                self.machine_short_message(i, 'w')
-        else:
-            self.machine_short_message(position, 'w', True)
+            self.machine_short_message(position, 'sleep')
 
     def machine_assign(self, machine, position):
         if self.status.machines[position] == 0:
@@ -120,31 +103,22 @@ class Controller:
         if not self.status.position_is_ready(int(position)):
             print("Position {} is not ready to receive set messages.".format(position))
         elif self.status.need_to_be_set(position):
-            if self.status.rule.game_mode == 'Q':
-                msg = {
-                    'target'        : self.status.positions[(int(position))].machine,
-                    'mode'          : str(self.status.rule.machine_mode),
-                    'wave'          : str(self.status.current_wave),
-                    'position'      : position,
-                    'num_players'   : len(self.status.positions[int(position)].players),
-                    'score'         : [],
-                }
-                for player in self.status.positions[int(position)].players:
-                    msg['score'].append(player.total_score())
-            else:
-                msg = {
-                    'target'        : self.status.positions[(int(position))].machine,
-                    'mode'          : str(self.status.rule.machine_mode),
-                    'wave'          : str(self.status.current_wave),
-                    'position'      : position,
-                    'tag_a'         : self.status.positions[int(position)].players[0].tag,
-                    'point_a'       : self.status.positions[int(position)].players[0].total_score(),
-                    'tag_b'         : self.status.positions[int(position)].players[1].tag,
-                    'point_b'       : self.status.positions[int(position)].players[1].total_score(),
-                }
+            msg = {
+                'machine'       : self.status.positions[(int(position))].machine,
+                'command'       : 'setwave',
+                'wave'          : str(self.status.current_wave),
+                'position'      : position,
+                'shots'         : str(self.status.rule.shots_per_wave),
+                'num_players'   : len(self.status.positions[int(position)].players),
+                'players'       : [],
+                'scores'        : [],
+            }
+            for player in self.status.positions[int(position)].players:
+                msg['players'].append(player.tag)
+                msg['scores'].append(player.total_score())
 
             self.status.set_position_wait(int(position))
-            self.mqtt.publish(generator.gen(msg))
+            self.socket_manager.send(msg)
             self.status.set_position_receiving(int(position))
     
     #=================#
@@ -259,28 +233,33 @@ class Controller:
         return conflict_flag
 
     def destroy(self):
-        self.mqtt.disconnect()
+        pass
 
-    def mqtt_on_message(self, client, userdata, message):
-        self.message_process(parser.parse(message.payload))
+    def message_reader(self):
+        while True:
+            message = self.socket_manager.pop_message()
+            if message:
+                self.message_process(message)
 
     def message_process(self, message):
         print(message)
-        if message['position']:
+        if 'position' in message:
             pos = message['position']
         else:
             pos = self.status.machines.index(message['machine'])
-        if message['type'] == 'ok':
+        if message['command'] == 'response':
             self.status.set_position_ok(pos)
-        elif message['type'] == 'ready':
+        elif message['command'] == 'initialize':
             self.status.set_position_ready(pos)
             self.machine_assign(int(message['machine']), pos)
-        elif message['type'] == 'wave':
+            resp = {'machine': int(message['machine']), 'command': 'response', 'status': True}
+            self.socket_manager.send(resp)
+        elif message['command'] == 'sendwave':
             self.status.save_wave(message)
 
     def all_sent_back_check(self, machine):
-        msg = {'mode': 'g', 'target': str(machine)}
-        self.mqtt.publish(generator.gen(msg))
+        msg = {'command': 'response', 'machine': str(machine), 'status': True}
+        self.socket_manager.send(msg)
 
     def load_config(self):
         self.rulename = self.config.get('Contest', 'rulename')
