@@ -97,5 +97,4 @@ ENV/
 *.sh
 __pycache__
 *.swp
-sql.cfg
 db.cfg
