@@ -31,6 +31,7 @@ Finally, at any directory as you wish clone this repo by the command:
 ## How to Use
 
 Switch to the directory you cloned this repo and simply use one of these command(at least one will work, I think):
+
 `python3 console.py` or `python console.py` or `py console.py`
 
 ## Technique
