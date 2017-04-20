@@ -16,9 +16,9 @@ Combination with wireless scoring machine.
 
 ## Installation
 
-First, ensure your environment has ==Python3== and ==Git==. If no, search them with your OS to figure out how to install them.
+First, ensure your environment has _Python3_ and _Git_. If no, search them with your OS to figure out how to install them.
 
-Next, if you have not installed the ==pymysql== module, use ==pip== to install it. Commonly you can do it by this command:
+Next, if you have not installed the _pymysql_ module, use _pip_ to install it. Commonly you can do it by this command:
 `pip install pymysql`
 If this do not take effect, you may try search it online to solve this problem.
 
