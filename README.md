@@ -19,10 +19,13 @@ Combination with wireless scoring machine.
 First, ensure your environment has _Python3_ and _Git_. If no, search them with your OS to figure out how to install them.
 
 Next, if you have not installed the _pymysql_ module, use _pip_ to install it. Commonly you can do it by this command:
+
 `pip install pymysql`
+
 If this do not take effect, you may try search it online to solve this problem.
 
 Finally, at any directory as you wish clone this repo by the command:
+
 `git clone https://github.com/garyuu/ArcheryContestScoreSystem`
 
 ## How to Use
