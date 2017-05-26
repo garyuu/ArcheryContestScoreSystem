@@ -88,30 +88,7 @@ class ScoringConsole(cmd.Cmd):
         if self.parse(argstr, 0):
             self.ctrl.machine_wake('all')
 
-    def do_status(self, argstr):
-        if self.parse(argstr, 0):
-            self.ctrl.status_display()
 
-    def do_statuspos(self, argstr):
-        if self.parse(argstr, 1):
-            try:
-                self.ctrl.status_display(int(self.args[0]))
-            except ValueError:
-                print("The argument should be numeric.")
-
-    def do_assign(self, argstr):
-        if self.parse(argstr, 2):
-            try:
-                self.ctrl.machine_assign(int(self.args[0]), int(self.args[1]))
-            except ValueError:
-                print("All arguments should be numeric.")
-
-    def do_unlink(self, argstr):
-        if self.parse(argstr, 1):
-            try:
-                self.ctrl.machine_unlink(int(self.args[0]))
-            except ValueError:
-                print("The argument should be numeric.")
 
     def do_setwave(self, argstr):
         if self.parse(argstr, 1):
@@ -145,8 +122,56 @@ class ScoringConsole(cmd.Cmd):
     def do_reloadplayerdata(self, argstr):
         if self.parse(argstr, 0):
             self.ctrl.load_player_list()
-            self.ctrl.load_waves()
-
+            self.ctrl.load_waves()	
+			
+	def do_status(self, argstr):
+        if self.parse(argstr, 0):
+            print(self.ctrl.command_display_status())
+			
+	def do_statusposition(self, argstr):
+        if self.parse(argstr, 1):
+            try:
+                print(self.ctrl.command_display_position(int(self.args[0])))
+            except ValueError:
+                print("The argument should be numeric.")
+				
+	def do_statusplayer(self, argstr):
+		if self.parse(argstr, 1):
+			try:
+				print(self.ctrl.command_display_player(int(self.args[0])))
+			except ValueError:
+                print("The argument should be numeric.")
+				
+	def do_clearstatus(self, argstr):
+		if self.parse(argstr, 0):
+			self.ctrl.command_clear_status()
+	
+	def do_exit(self, argstr):
+		if self.parse(argstr, 0):
+			exit();
+	
+	def do_y(self, argstr):
+		if self.parse(argstr, 0):
+			self.ctrl.command_error_decision(True)
+	
+	def do_n(self, argstr):
+		if self.parse(argstr, 0):
+			self.ctrl.command_error_decision(False)
+			
+	def do_assign(self, argstr):
+        if self.parse(argstr, 2):
+            try:
+                self.ctrl.command_assign_machine_to_position(int(self.args[0]), int(self.args[1]))
+            except ValueError:
+                print("All arguments should be numeric.")
+				
+	def do_unlink(self, ardstr):
+		if self.parse(argstr, 1):
+			try:
+				self.ctrl.command_unlink_position(int(self.args[0]))
+			except ValueError:
+                print("All arguments should be numeric.")
+				
 def main():
     c = ScoringConsole()
     c.cmdloop()
